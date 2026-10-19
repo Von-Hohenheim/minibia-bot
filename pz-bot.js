@@ -7277,7 +7277,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
                   <span>Auto Eat</span>
                 </label>
                 <label class="mb-field mb-field-compact" for="minibia-bot-auto-eat-hotkey">
-                  <span class="mb-field-label">Eat Hotkey (1-12)</span>
+                  <span class="mb-small-note">Eat Hotkey (1-12)</span>
                   <input type="number" id="minibia-bot-auto-eat-hotkey" min="1" max="12" placeholder="10" />
                 </label>
               </div>
@@ -7286,14 +7286,14 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
                   <input type="checkbox" id="minibia-bot-auto-invisible-enabled" />
                   <span>Auto Invisible</span>
                 </label>
-                <div class="mb-small-note">Casts utana vid whenever invisibility is not active.</div>
+                <div class="mb-small-note">Tira utana vid cuando no esta invisible.</div>
               </div>
               <div class="mb-row">
                 <label class="mb-toggle">
                   <input type="checkbox" id="minibia-bot-auto-magic-shield-enabled" />
                   <span>Auto Utamo Vita</span>
                 </label>
-                <div class="mb-small-note">Casts utamo vita whenever magic shield is not active.</div>
+                <div class="mb-small-note">Tira utamo vita cuando no tiene el escudo magico.</div>
               </div>
               <div class="mb-row">
                 <label class="mb-toggle">
