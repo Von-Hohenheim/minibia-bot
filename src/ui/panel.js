@@ -938,9 +938,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
             </div>
           </div>
           <div class="mb-section mb-column-section">
-            <div class="mb-note">Loaded routines: Panic Runner, magic level trainer, auto eat, auto invisible, auto utamo vita, equip ring, auto heal, auto attack, and talk.</div>
-          </div>
-          <div class="mb-section mb-column-section">
             <div class="mb-label">Auto Heal</div>
             <div class="mb-stack">
               <label class="mb-toggle">
