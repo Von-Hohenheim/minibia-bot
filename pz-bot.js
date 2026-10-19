@@ -1447,8 +1447,6 @@ window.__minibiaBotBundle.installPanicModule = function installPanicModule(bot) 
     bot.ui?.refreshAutoEatStatus?.();
     bot.ui?.refreshAutoInvisibleStatus?.();
     bot.ui?.refreshAutoMagicShieldStatus?.();
-    bot.ui?.refreshAutoAttackStatus?.();
-    bot.ui?.refreshCaveStatus?.();
     bot.ui?.refreshEquipRingStatus?.();
     return true;
   }
@@ -6572,140 +6570,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     autoMagicShieldToggle.checked = !!bot.magicShield?.status?.().running;
   }
 
-  function refreshAutoAttackStatus() {
-    const autoAttackToggle = document.getElementById("minibia-bot-auto-attack-enabled");
-    if (!autoAttackToggle) return;
-
-    autoAttackToggle.checked = !!bot.attack?.status?.().running;
-  }
-
-  function refreshCaveStatus() {
-    const statusLabel = document.getElementById("minibia-bot-cave-status");
-    const startButton = document.getElementById("minibia-bot-cave-start");
-    const stopButton = document.getElementById("minibia-bot-cave-stop");
-    const route = bot.cave?.getRoute?.() || [];
-    const status = bot.cave?.status?.();
-
-    if (statusLabel) {
-      if (!route.length) {
-        statusLabel.textContent = "Status: no waypoints";
-      } else if (status?.running) {
-        const waypointNumber = (status.currentIndex ?? 0) + 1;
-        const distanceLabel =
-          Number.isFinite(status?.distanceToWaypoint) && status.distanceToWaypoint >= 0
-            ? `, dist ${status.distanceToWaypoint}`
-            : "";
-        statusLabel.textContent = `Status: running (${waypointNumber}/${route.length}${distanceLabel})`;
-      } else {
-        statusLabel.textContent = `Status: idle (${route.length} waypoint${route.length === 1 ? "" : "s"})`;
-      }
-    }
-
-    if (startButton) {
-      startButton.disabled = !route.length || !!status?.running;
-    }
-
-    if (stopButton) {
-      stopButton.disabled = !status?.running;
-    }
-  }
-
-  function refreshCavePresetControls() {
-    const select = document.getElementById("minibia-bot-cave-preset-select");
-    const label = document.getElementById("minibia-bot-cave-preset-status");
-    const deleteButton = document.getElementById("minibia-bot-cave-preset-delete");
-    const status = bot.cave?.status?.();
-    const presetNames = status?.presetNames || bot.cave?.getPresetNames?.() || [];
-    const activePresetName = status?.activePresetName || bot.cave?.getActivePresetName?.() || "Default";
-
-    if (select) {
-      const previousValue = select.value;
-      select.innerHTML = "";
-
-      if (!presetNames.length) {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "No saved presets";
-        select.appendChild(option);
-        select.disabled = true;
-      } else {
-        presetNames.forEach((name) => {
-          const option = document.createElement("option");
-          option.value = name;
-          option.textContent = name;
-          select.appendChild(option);
-        });
-        select.disabled = false;
-        const nextValue = presetNames.includes(activePresetName) ? activePresetName : previousValue;
-        if (nextValue) {
-          select.value = nextValue;
-        }
-      }
-    }
-
-    if (label) {
-      label.textContent = presetNames.length
-        ? `Preset: ${activePresetName} (${presetNames.length} saved)`
-        : `Preset: ${activePresetName}`;
-    }
-
-    if (deleteButton) {
-      deleteButton.disabled = !presetNames.length || !select?.value;
-    }
-  }
-
-  function refreshCaveClosestStatus() {
-    const label = document.getElementById("minibia-bot-cave-closest");
-    if (!label) return;
-
-    const position = bot.getPlayerPosition?.();
-    const route = bot.cave?.getRoute?.() || [];
-
-    if (!position) {
-      label.textContent = "Closest start: current position unavailable";
-      return;
-    }
-
-    if (!route.length) {
-      label.textContent = "Closest start: no waypoints";
-      return;
-    }
-
-    const closestIndex = bot.cave?.findClosestWaypointIndex?.(position) ?? 0;
-    const waypoint = route[closestIndex];
-
-    if (!waypoint) {
-      label.textContent = "Closest start: unavailable";
-      return;
-    }
-
-    label.textContent = `Closest start: ${closestIndex + 1}. ${waypoint.x}, ${waypoint.y}, ${waypoint.z}`;
-  }
-
-  function refreshCaveTransitionStatus() {
-    const label = document.getElementById("minibia-bot-cave-transition-status");
-    if (!label) return;
-
-    const transitions = bot.cave?.getTransitions?.() || [];
-    if (!transitions.length) {
-      label.textContent = "Transitions learned: none";
-      return;
-    }
-
-    const latest = transitions
-      .slice()
-      .sort((a, b) => Number(b?.lastSeenAt || 0) - Number(a?.lastSeenAt || 0))[0];
-
-    if (!latest?.from || !latest?.to) {
-      label.textContent = `Transitions learned: ${transitions.length}`;
-      return;
-    }
-
-    const extra = transitions.length > 1 ? ` (+${transitions.length - 1} more)` : "";
-    label.textContent =
-      `Transitions learned: ${latest.from.x}, ${latest.from.y}, ${latest.from.z} -> ` +
-      `${latest.to.x}, ${latest.to.y}, ${latest.to.z}${extra}`;
-  }
 
   function refreshEquipRingStatus() {
     const equipRingToggle = document.getElementById("minibia-bot-equip-ring-enabled");
@@ -6714,116 +6578,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     equipRingToggle.checked = !!bot.equipRing?.status?.().running;
   }
 
-  function refreshTalkStatus() {
-    const talkToggle = document.getElementById("minibia-bot-talk-enabled");
-    const statusLabel = document.getElementById("minibia-bot-talk-status");
-    const status = bot.talk?.status?.();
-
-    if (talkToggle) {
-      talkToggle.checked = !!status?.running;
-    }
-
-    if (statusLabel) {
-      if (!status?.config?.apiKey) {
-        statusLabel.textContent = "Status: API key missing";
-      } else if (status?.pending) {
-        statusLabel.textContent = "Status: generating";
-      } else if (status?.running) {
-        statusLabel.textContent = "Status: listening to Default";
-      } else {
-        statusLabel.textContent = "Status: idle";
-      }
-    }
-  }
-
-  function refreshVisibleCreatures() {
-    const list = document.getElementById("minibia-bot-visible-creatures-list");
-    if (!list) return;
-
-    const me = bot.getPlayerPosition?.();
-    const status = bot.xray?.status?.();
-    const creatures = status?.visibleCreatures || [];
-    const selectedFloor = status?.config?.selectedFloor;
-    list.innerHTML = "";
-
-    if (!me) {
-      const empty = document.createElement("div");
-      empty.className = "mb-small-note";
-      empty.textContent = "Current position unavailable.";
-      list.appendChild(empty);
-      return;
-    }
-
-    const getFloorOffset = (creature) => (creature.position?.z || 0) - me.z;
-    const getFloorDistance = (creature) => Math.abs(getFloorOffset(creature));
-
-    const visibleCreatures = creatures
-      .filter((creature) => {
-        const floor = creature?.position?.z;
-        if (floor == null) {
-          return false;
-        }
-
-        if (selectedFloor != null) {
-          return floor === selectedFloor;
-        }
-
-        return floor !== me.z;
-      })
-      .sort((a, b) => {
-      const floorDistanceDiff = getFloorDistance(a) - getFloorDistance(b);
-      if (floorDistanceDiff !== 0) return floorDistanceDiff;
-
-      const floorOffsetDiff = getFloorOffset(a) - getFloorOffset(b);
-      if (floorOffsetDiff !== 0) return floorOffsetDiff;
-
-      const aDist = Math.abs((a.position?.x || 0) - me.x) + Math.abs((a.position?.y || 0) - me.y);
-      const bDist = Math.abs((b.position?.x || 0) - me.x) + Math.abs((b.position?.y || 0) - me.y);
-      return aDist - bDist;
-    });
-
-    if (!visibleCreatures.length) {
-      const empty = document.createElement("div");
-      empty.className = "mb-small-note";
-      empty.textContent = selectedFloor == null
-        ? "No off-floor creatures."
-        : `No creatures on floor ${selectedFloor}.`;
-      list.appendChild(empty);
-      return;
-    }
-
-    let currentFloor = null;
-
-    visibleCreatures.forEach((creature) => {
-      const floor = creature.position?.z;
-      if (floor !== currentFloor) {
-        currentFloor = floor;
-        const floorOffset = me.z - floor;
-        const floorOffsetLabel =
-          floorOffset === 0 ? "0" : floorOffset > 0 ? `+${floorOffset}` : `${floorOffset}`;
-
-        const floorLabel = document.createElement("div");
-        floorLabel.className = "mb-floor-label";
-        floorLabel.textContent = floorOffsetLabel;
-        list.appendChild(floorLabel);
-      }
-
-      const row = document.createElement("div");
-      row.className = "mb-creature-row";
-
-      const name = document.createElement("div");
-      name.className = "mb-creature-name";
-      name.textContent = creature.name || (creature.type === 0 ? "Player" : "Mob");
-
-      const meta = document.createElement("div");
-      meta.className = "mb-small-note";
-      meta.textContent = `${creature.type === 0 ? "Player" : "Mob"} at ${creature.position.x}, ${creature.position.y}, ${creature.position.z}`;
-
-      row.appendChild(name);
-      row.appendChild(meta);
-      list.appendChild(row);
-    });
-  }
 
   function setPanelCollapsed(panel, collapsed) {
     if (!panel) return;
@@ -7630,7 +7384,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
 
 
     bot.addCleanup(() => {
-      
     });
 
   }
