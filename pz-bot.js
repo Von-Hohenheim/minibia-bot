@@ -7319,20 +7319,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
             <div class="mb-note">Loaded routines: Panic Runner, magic level trainer, auto eat, auto invisible, auto utamo vita, equip ring, auto heal, auto attack, and talk.</div>
           </div>
         </div>
-        <div class="mb-side-column">
-          <div class="mb-section mb-column-section">
-            <div class="mb-label">Xray</div>
-            <button type="button" class="mb-small-button" id="minibia-bot-xray-overlay-toggle">Disable Overlay</button>
-            <div class="mb-small-note" id="minibia-bot-xray-overlay-status">Overlay: on</div>
-            <label class="mb-field" for="minibia-bot-xray-floor-select">
-              <span class="mb-field-label">Floor Filter</span>
-              <select id="minibia-bot-xray-floor-select">
-                <option value="all">All floors</option>
-              </select>
-            </label>
-            <div class="mb-list" id="minibia-bot-visible-creatures-list"></div>
-          </div>
-          <div class="mb-section mb-column-section">
+           <div class="mb-section mb-column-section">
             <div class="mb-label">Auto Heal</div>
             <div class="mb-stack">
               <label class="mb-toggle">

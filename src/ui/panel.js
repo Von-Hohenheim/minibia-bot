@@ -384,23 +384,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     }
   }
 
-  function refreshVisibleCreatures() {
-    const list = document.getElementById("minibia-bot-visible-creatures-list");
-    if (!list) return;
 
-    const me = bot.getPlayerPosition?.();
-    const status = bot.xray?.status?.();
-    const creatures = status?.visibleCreatures || [];
-    const selectedFloor = status?.config?.selectedFloor;
-    list.innerHTML = "";
-
-    if (!me) {
-      const empty = document.createElement("div");
-      empty.className = "mb-small-note";
-      empty.textContent = "Current position unavailable.";
-      list.appendChild(empty);
-      return;
-    }
 
     const getFloorOffset = (creature) => (creature.position?.z || 0) - me.z;
     const getFloorDistance = (creature) => Math.abs(getFloorOffset(creature));
@@ -964,20 +948,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
           </div>
           <div class="mb-section mb-column-section">
             <div class="mb-note">Loaded routines: Panic Runner, magic level trainer, auto eat, auto invisible, auto utamo vita, equip ring, auto heal, auto attack, and talk.</div>
-          </div>
-        </div>
-        <div class="mb-side-column">
-          <div class="mb-section mb-column-section">
-            <div class="mb-label">Xray</div>
-            <button type="button" class="mb-small-button" id="minibia-bot-xray-overlay-toggle">Disable Overlay</button>
-            <div class="mb-small-note" id="minibia-bot-xray-overlay-status">Overlay: on</div>
-            <label class="mb-field" for="minibia-bot-xray-floor-select">
-              <span class="mb-field-label">Floor Filter</span>
-              <select id="minibia-bot-xray-floor-select">
-                <option value="all">All floors</option>
-              </select>
-            </label>
-            <div class="mb-list" id="minibia-bot-visible-creatures-list"></div>
           </div>
           <div class="mb-section mb-column-section">
             <div class="mb-label">Auto Heal</div>
