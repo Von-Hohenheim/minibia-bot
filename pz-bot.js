@@ -7359,58 +7359,10 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
               <div class="mb-small-note" id="minibia-bot-talk-status">Status: idle</div>
               <div class="mb-small-note">Replies only to the newest unseen message in Default chat.</div>
               <div class="mb-small-note">It will not reply to itself and will not admit it is a bot.</div>
-            </div>
+         </div>
           </div>
         </div>
-        <div class="mb-cave-column">
-          <div class="mb-section mb-column-section">
-            <div class="mb-label">Cave Bot</div>
-            <div class="mb-stack">
-              <div class="mb-field-grid">
-                <label class="mb-field" for="minibia-bot-cave-preset-select">
-                  <select id="minibia-bot-cave-preset-select"></select>
-                </label>
-              </div>
-              <div class="mb-actions mb-actions-inline-two">
-                <button type="button" class="mb-small-button" id="minibia-bot-cave-preset-new">New</button>
-                <button type="button" class="mb-small-button" id="minibia-bot-cave-preset-delete">Delete</button>
-              </div>
-              <div class="mb-actions mb-actions-inline-two">
-                <button type="button" class="mb-small-button" id="minibia-bot-cave-record">Record Spot</button>
-                <button type="button" class="mb-small-button" id="minibia-bot-cave-remove-last">Remove Last</button>
-              </div>
-              <div class="mb-small-note" id="minibia-bot-cave-closest">Closest start: no waypoints</div>
-              <div class="mb-small-note" id="minibia-bot-cave-transition-status">Transitions learned: none</div>
-              <div class="mb-actions mb-actions-inline-two">
-                <button type="button" class="mb-small-button" id="minibia-bot-cave-start">Start</button>
-                <button type="button" class="mb-small-button" id="minibia-bot-cave-stop">Stop</button>
-              </div>
-              <div class="mb-small-note" id="minibia-bot-cave-status">Status: no waypoints</div>
-            </div>
-          </div>
-          <div class="mb-section mb-column-section">
-            <div class="mb-label">Auto Attack</div>
-            <div class="mb-stack">
-              <label class="mb-toggle">
-                <input type="checkbox" id="minibia-bot-auto-attack-enabled" />
-                <span>Enable Auto Attack</span>
-              </label>
-              <label class="mb-toggle">
-                <input type="checkbox" id="minibia-bot-auto-attack-melee" />
-                <span>Melee Mode</span>
-              </label>
-              <label class="mb-field" for="minibia-bot-auto-attack-hotkey">
-                <span class="mb-field-label">Target Hotkey (1-12)</span>
-                <input type="number" id="minibia-bot-auto-attack-hotkey" min="1" max="12" placeholder="3" />
-              </label>
-              <label class="mb-field" for="minibia-bot-auto-attack-rune-hotkey">
-                <span class="mb-field-label">Rune Hotkey (1-12)</span>
-                <input type="number" id="minibia-bot-auto-attack-rune-hotkey" min="1" max="12" placeholder="4" />
-              </label>
-              <div class="mb-small-note">Melee mode uses the target hotkey, then walks adjacent to the target. Non-melee mode uses the target hotkey to acquire a target and the rune hotkey to cast on that target.</div>
-            </div>
-          </div>
-        </div>
+
       </div>
     `;
     document.body.appendChild(panel);
