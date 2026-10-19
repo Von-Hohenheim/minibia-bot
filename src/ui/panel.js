@@ -977,20 +977,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
               <div class="mb-small-note">Checks about twenty times per second. HP is used before mana, and unregistered hotkey presses are retried quickly.</div>
             </div>
           </div>
-          <div class="mb-section mb-column-section">
-            <div class="mb-label">Talk</div>
-            <div class="mb-stack">
-              <label class="mb-toggle">
-                <input type="checkbox" id="minibia-bot-talk-enabled" />
-                <span>Enable Auto Reply</span>
-              </label>
-              <input type="password" id="minibia-bot-talk-api-key" placeholder="Gemini API key" />
-              <textarea id="minibia-bot-talk-prompt" placeholder="Reply style prompt"></textarea>
-              <div class="mb-small-note" id="minibia-bot-talk-status">Status: idle</div>
-              <div class="mb-small-note">Replies only to the newest unseen message in Default chat.</div>
-              <div class="mb-small-note">It will not reply to itself and will not admit it is a bot.</div>
-            </div>
-          </div>
+
         </div>
 
       </div>
