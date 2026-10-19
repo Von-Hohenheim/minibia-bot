@@ -897,7 +897,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
           <div class="mb-section mb-column-section">
             <div class="mb-label" id="minibia-bot-home">Pz Home: not set</div>
             <div class="mb-stack">
-              <button type="button" id="minibia-bot-set-home">Set Home</button>
+              <button type="button" id="minibia-bot-set-home">Set Pz Home</button>
               <label class="mb-toggle">
                 <input type="checkbox" id="minibia-bot-panic-unknown" />
                 <span>Player Desconocido</span>
@@ -908,7 +908,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
               </label>
               <label class="mb-toggle">
                 <input type="checkbox" id="minibia-bot-panic-return" />
-                <span>Auto Return</span>
+                <span>Auto Regreso</span>
               </label>
               <div class="mb-inline">
                 <input type="text" id="minibia-bot-panic-trusted-input" placeholder="Player Conocido" />
@@ -918,15 +918,8 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
             </div>
           </div>
           <div class="mb-section mb-column-section">
-            <div class="mb-label">GM Kill Switch</div>
-            <div class="mb-stack">
-              <div class="mb-inline">
-                <input type="text" id="minibia-bot-panic-gm-input" placeholder="Game master name" />
-                <button type="button" class="mb-small-button" id="minibia-bot-panic-gm-add">Add</button>
-              </div>
-              <div class="mb-list" id="minibia-bot-panic-gm-list"></div>
-            </div>
-          </div>
+
+
           <div class="mb-section mb-column-section">
             <div class="mb-actions">
               <div class="mb-row-three">
