@@ -102,7 +102,6 @@
       modules: ["pz", "xray", "panic", "rune", "heal", "invisible", "magicShield", "attack", "cave", "equipRing", "eat", "talk", "ui"],
     });
     console.log("minibiaBot.reload()");
-    console.log("minibiaBot.xray.status()");
     console.log("minibiaBot.panic.status()");
     console.log("minibiaBot.pz.goToNearestPz()");
     console.log("minibiaBot.pz.setHomePzCurrentSpot()");
@@ -115,18 +114,10 @@
     console.log("minibiaBot.invisible.stop()");
     console.log("minibiaBot.magicShield.start()");
     console.log("minibiaBot.magicShield.stop()");
-    console.log("minibiaBot.attack.start()");
-    console.log("minibiaBot.attack.stop()");
-    console.log("minibiaBot.cave.addWaypointCurrentSpot()");
-    console.log("minibiaBot.cave.start()");
-    console.log("minibiaBot.cave.stop()");
     console.log("minibiaBot.equipRing.start()");
     console.log("minibiaBot.equipRing.stop()");
     console.log("minibiaBot.eat.start()");
     console.log("minibiaBot.eat.stop()");
-    console.log("minibiaBot.talk.updateConfig({ apiKey: \"...\" })");
-    console.log("minibiaBot.talk.start()");
-    console.log("minibiaBot.talk.stop()");
     return bot;
   }
 
