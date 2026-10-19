@@ -31,8 +31,8 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
 
     const home = bot.pz?.getHomePz?.();
     homeLabel.textContent = home
-      ? `Panic Runner Home: ${home.x}, ${home.y}, ${home.z}`
-      : "Panic Runner Home: not set";
+      ? `Pz Home: ${home.x}, ${home.y}, ${home.z}`
+      : "Pz Home: not set";
   }
 
   function refreshPanicStatus() {
@@ -892,10 +892,10 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       <div class="mb-body">
         <div class="mb-main-column">
           <div class="mb-actions mb-column-section">
-            <button type="button" id="minibia-bot-reload">Reload Bot</button>
+            <button type="button" id="minibia-bot-reload">Recargar Bot</button>
           </div>
           <div class="mb-section mb-column-section">
-            <div class="mb-label" id="minibia-bot-home">Panic Runner Home: not set</div>
+            <div class="mb-label" id="minibia-bot-home">Pz Home: not set</div>
             <div class="mb-stack">
               <button type="button" id="minibia-bot-set-home">Set Home</button>
               <label class="mb-toggle">
