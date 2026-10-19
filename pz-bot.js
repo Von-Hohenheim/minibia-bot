@@ -7314,7 +7314,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
               </label>
               <div class="mb-field-grid">
                 <label class="mb-field" for="minibia-bot-auto-heal-min-hp">
-                  <span class="mb-field-label">Minimum HP</span>
+                  <span class="mb-field-label">Minimo HP</span>
                   <input type="number" id="minibia-bot-auto-heal-min-hp" min="0" placeholder="250" />
                 </label>
                 <label class="mb-field" for="minibia-bot-auto-heal-hp-hotkey">
@@ -7322,7 +7322,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
                   <input type="number" id="minibia-bot-auto-heal-hp-hotkey" min="1" max="12" placeholder="1" />
                 </label>
                 <label class="mb-field" for="minibia-bot-auto-heal-min-mana">
-                  <span class="mb-field-label">Minimum Mana</span>
+                  <span class="mb-field-label">Minimo Mana</span>
                   <input type="number" id="minibia-bot-auto-heal-min-mana" min="0" placeholder="150" />
                 </label>
                 <label class="mb-field" for="minibia-bot-auto-heal-mana-hotkey">
@@ -7330,7 +7330,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
                   <input type="number" id="minibia-bot-auto-heal-mana-hotkey" min="1" max="12" placeholder="2" />
                 </label>
               </div>
-              <div class="mb-small-note">Checks about twenty times per second. HP is used before mana, and unregistered hotkey presses are retried quickly.</div>
+              <div class="mb-small-note">Comprueba veinte veces por segundo. Se usa la salud antes que el maná, y las pulsaciones de teclas no registradas se intentan de nuevo rápidamente.</div>
             </div>
           </div>
 
