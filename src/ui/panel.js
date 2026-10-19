@@ -54,16 +54,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     }
   }
 
-  function refreshXrayStatus() {
-    const status = bot.xray?.status?.();
-    const me = bot.getPlayerPosition?.();
-    const overlayButton = document.getElementById("minibia-bot-xray-overlay-toggle");
-    const overlayLabel = document.getElementById("minibia-bot-xray-overlay-status");
-    const floorSelect = document.getElementById("minibia-bot-xray-floor-select");
-    const formatFloorOffset = (floor) => {
-      if (!me || floor == null) {
-        return null;
-      }
+
 
       const offset = me.z - floor;
       return offset === 0 ? "0" : offset > 0 ? `+${offset}` : `${offset}`;
