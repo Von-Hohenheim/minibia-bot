@@ -55,17 +55,13 @@
     const bot = currentBundle.createBot();
 
     currentBundle.installPzModule(bot);
-    currentBundle.installXrayModule(bot);
     currentBundle.installPanicModule(bot);
     currentBundle.installRuneModule(bot);
     currentBundle.installHealModule(bot);
     currentBundle.installAutoInvisibleModule(bot);
     currentBundle.installAutoMagicShieldModule(bot);
-    currentBundle.installAutoAttackModule(bot);
-    currentBundle.installCaveModule(bot);
     currentBundle.installEquipRingModule(bot);
     currentBundle.installAutoEatModule(bot);
-    currentBundle.installTalkModule(bot);
     currentBundle.installPanel(bot);
 
     bot.ui.inject();
@@ -78,17 +74,13 @@
       pz: {
         home: bot.pz.getHomePz(),
       },
-      xray: bot.xray.status(),
       panic: bot.panic.status(),
       rune: bot.rune.status(),
       heal: bot.heal.status(),
       invisible: bot.invisible.status(),
       magicShield: bot.magicShield.status(),
-      attack: bot.attack.status(),
-      cave: bot.cave.status(),
       equipRing: bot.equipRing.status(),
       eat: bot.eat.status(),
-      talk: bot.talk.status(),
     });
 
     window.minibiaBot = bot;
