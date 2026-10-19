@@ -5,11 +5,8 @@
     ["heal", "minibiaBot.heal.config"],
     ["invisible", "minibiaBot.invisible.config"],
     ["magicShield", "minibiaBot.magicShield.config"],
-    ["attack", "minibiaBot.attack.config"],
-    ["cave", "minibiaBot.cave.config"],
     ["equipRing", "minibiaBot.equipRing.config"],
     ["eat", "minibiaBot.eat.config"],
-    ["talk", "minibiaBot.talk.config"],
   ];
 
   function getPersistedEnabledSnapshot(bot) {
@@ -99,7 +96,7 @@
 
     console.log("[minibia-bot] ready", {
       version: bot.version,
-      modules: ["pz", "xray", "panic", "rune", "heal", "invisible", "magicShield", "attack", "cave", "equipRing", "eat", "talk", "ui"],
+      modules: ["pz", "panic", "rune", "heal", "invisible", "magicShield", "equipRing", "eat", "ui"],
     });
     console.log("minibiaBot.reload()");
     console.log("minibiaBot.panic.status()");
