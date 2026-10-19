@@ -7630,7 +7630,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
 
 
     bot.addCleanup(() => {
-      window.clearInterval(caveStatusTimerId);
     });
 
   }
