@@ -919,6 +919,11 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
           </div>
           <div class="mb-section mb-column-section">
 
+            <div class="mb-stack">
+              <div class="mb-inline">
+              </div>
+            </div>
+          </div>
 
           <div class="mb-section mb-column-section">
             <div class="mb-actions">
