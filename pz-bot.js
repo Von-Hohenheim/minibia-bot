@@ -7286,14 +7286,14 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
                   <input type="checkbox" id="minibia-bot-auto-invisible-enabled" />
                   <span>Auto Invisible</span>
                 </label>
-                <div class="mb-small-note">Tira utana vid cuando no esta invisible.</div>
+                <div class="mb-small-note">Castea utana vid cuando no esta invisible.</div>
               </div>
               <div class="mb-row">
                 <label class="mb-toggle">
                   <input type="checkbox" id="minibia-bot-auto-magic-shield-enabled" />
                   <span>Auto Utamo Vita</span>
                 </label>
-                <div class="mb-small-note">Tira utamo vita cuando no tiene el escudo magico.</div>
+                <div class="mb-small-note">Castea utamo vita cuando no tiene el escudo magico.</div>
               </div>
               <div class="mb-row">
                 <label class="mb-toggle">
