@@ -892,16 +892,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
               <div class="mb-list" id="minibia-bot-panic-trusted-list"></div>
             </div>
           </div>
-          <div class="mb-section mb-column-section">
-            <div class="mb-label">GM Kill Switch</div>
-            <div class="mb-stack">
-              <div class="mb-inline">
-                <input type="text" id="minibia-bot-panic-gm-input" placeholder="Game master name" />
-                <button type="button" class="mb-small-button" id="minibia-bot-panic-gm-add">Add</button>
-              </div>
-              <div class="mb-list" id="minibia-bot-panic-gm-list"></div>
-            </div>
-          </div>
+
       
           <div class="mb-section mb-column-section">
             <div class="mb-actions">
