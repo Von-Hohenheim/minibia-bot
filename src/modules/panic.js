@@ -335,8 +335,6 @@ window.__minibiaBotBundle.installPanicModule = function installPanicModule(bot) 
     bot.ui?.refreshAutoEatStatus?.();
     bot.ui?.refreshAutoInvisibleStatus?.();
     bot.ui?.refreshAutoMagicShieldStatus?.();
-    bot.ui?.refreshAutoAttackStatus?.();
-    bot.ui?.refreshCaveStatus?.();
     bot.ui?.refreshEquipRingStatus?.();
     return true;
   }

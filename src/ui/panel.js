@@ -894,99 +894,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       });
     }
 
-    if (caveRecordButton) {
-      caveRecordButton.addEventListener("click", () => {
-        bot.cave.addWaypointCurrentSpot();
-        refreshCavePresetControls();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (caveRemoveLastButton) {
-      caveRemoveLastButton.addEventListener("click", () => {
-        bot.cave.removeLastWaypoint();
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (caveStartButton) {
-      caveStartButton.addEventListener("click", () => {
-        bot.cave.start();
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (caveStopButton) {
-      caveStopButton.addEventListener("click", () => {
-        bot.cave.stop();
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (cavePresetSelect) {
-      cavePresetSelect.addEventListener("change", () => {
-        const name = cavePresetSelect.value || "";
-        const activePresetName = bot.cave?.getActivePresetName?.() || "";
-        if (!name || name === activePresetName) {
-          refreshCavePresetControls();
-          return;
-        }
-
-        const loadedPreset = bot.cave.loadPreset(name);
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (cavePresetNewButton) {
-      cavePresetNewButton.addEventListener("click", () => {
-        const name = window.prompt("Name the new cave preset:");
-        if (name == null) {
-          return;
-        }
-
-        const createdPreset = bot.cave.createPreset(name);
-        if (!createdPreset) {
-          return;
-        }
-
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (cavePresetDeleteButton) {
-      cavePresetDeleteButton.addEventListener("click", () => {
-        const name = cavePresetSelect?.value || "";
-        if (!name) {
-          return;
-        }
-
-        const deleted = bot.cave.deletePreset(name);
-        if (!deleted) {
-          return;
-        }
-
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
 
     if (autoHealMinHpInput) {
       autoHealMinHpInput.value = String(bot.heal?.config?.minHp ?? 0);
@@ -1048,97 +955,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       });
     }
 
-    if (autoAttackHotkeyInput) {
-      autoAttackHotkeyInput.value = String(bot.attack?.config?.targetHotbarSlot ?? 3);
-      autoAttackHotkeyInput.addEventListener("change", () => {
-        const targetHotbarSlot = Math.min(12, Math.max(1, Number(autoAttackHotkeyInput.value) || 1));
-        autoAttackHotkeyInput.value = String(targetHotbarSlot);
-        bot.attack.updateConfig({ targetHotbarSlot });
-      });
-    }
-
-    if (autoAttackRuneHotkeyInput) {
-      autoAttackRuneHotkeyInput.value = bot.attack?.config?.runeHotbarSlot
-        ? String(bot.attack.config.runeHotbarSlot)
-        : "";
-      autoAttackRuneHotkeyInput.addEventListener("change", () => {
-        const rawValue = Number(autoAttackRuneHotkeyInput.value);
-        const runeHotbarSlot = Number.isFinite(rawValue) && rawValue >= 1 && rawValue <= 12
-          ? Math.trunc(rawValue)
-          : null;
-        autoAttackRuneHotkeyInput.value = runeHotbarSlot ? String(runeHotbarSlot) : "";
-        bot.attack.updateConfig({ runeHotbarSlot });
-      });
-    }
-
-    if (autoAttackMeleeInput) {
-      autoAttackMeleeInput.checked = bot.attack?.config?.meleeMode !== false;
-      autoAttackMeleeInput.addEventListener("change", () => {
-        bot.attack.updateConfig({ meleeMode: autoAttackMeleeInput.checked });
-      });
-    }
-
-    if (autoAttackEnabledInput) {
-      autoAttackEnabledInput.checked = !!bot.attack?.status?.().running;
-      autoAttackEnabledInput.addEventListener("change", () => {
-        const targetHotbarSlot = Math.min(
-          12,
-          Math.max(1, Number(autoAttackHotkeyInput?.value) || bot.attack.config.targetHotbarSlot || 1)
-        );
-        const runeHotbarSlot = (() => {
-          const rawValue = Number(autoAttackRuneHotkeyInput?.value);
-          if (Number.isFinite(rawValue) && rawValue >= 1 && rawValue <= 12) {
-            return Math.trunc(rawValue);
-          }
-
-          return bot.attack.config.runeHotbarSlot ?? null;
-        })();
-        const meleeMode = !!autoAttackMeleeInput?.checked;
-
-        if (autoAttackEnabledInput.checked) {
-          bot.attack.start({ targetHotbarSlot, runeHotbarSlot, meleeMode });
-        } else {
-          bot.attack.stop();
-        }
-
-        refreshAutoAttackStatus();
-      });
-    }
-
-    if (talkApiKeyInput) {
-      talkApiKeyInput.value = bot.talk?.config?.apiKey || "";
-      talkApiKeyInput.addEventListener("change", () => {
-        bot.talk.updateConfig({ apiKey: talkApiKeyInput.value.trim() });
-        refreshTalkStatus();
-      });
-    }
-
-    if (talkPromptInput) {
-      talkPromptInput.value = bot.talk?.config?.systemPrompt || "";
-      talkPromptInput.addEventListener("change", () => {
-        bot.talk.updateConfig({ systemPrompt: talkPromptInput.value.trim() });
-      });
-    }
-
-    if (talkEnabledInput) {
-      talkEnabledInput.checked = !!bot.talk?.status?.().running;
-      talkEnabledInput.addEventListener("change", () => {
-        if (talkEnabledInput.checked) {
-          bot.talk.updateConfig({
-            apiKey: talkApiKeyInput?.value?.trim() || "",
-            systemPrompt: talkPromptInput?.value?.trim() || bot.talk.config.systemPrompt || "",
-          });
-          const started = bot.talk.start();
-          if (!started) {
-            talkEnabledInput.checked = false;
-          }
-        } else {
-          bot.talk.stop();
-        }
-
-        refreshTalkStatus();
-      });
-    }
 
     if (panicUnknownInput) {
       panicUnknownInput.checked = !!bot.panic?.status?.().config?.unknownPlayerEnabled;
@@ -1164,22 +980,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       });
     }
 
-    if (xrayOverlayButton) {
-      xrayOverlayButton.addEventListener("click", () => {
-        const enabled = !!bot.xray?.status?.().config?.overlayEnabled;
-        bot.xray?.setOverlayEnabled?.(!enabled);
-        refreshXrayStatus();
-      });
-    }
-
-    if (xrayFloorSelect) {
-      xrayFloorSelect.addEventListener("change", () => {
-        const rawValue = xrayFloorSelect.value;
-        bot.xray?.setSelectedFloor?.(rawValue === "all" ? null : Number(rawValue));
-        refreshXrayStatus();
-        refreshVisibleCreatures();
-      });
-    }
 
     panel.querySelector("#minibia-bot-set-home")?.addEventListener("click", () => {
       bot.pz.setHomePzCurrentSpot();
@@ -1188,22 +988,14 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
 
     refreshHomeLabel();
     refreshPanicStatus();
-    refreshXrayStatus();
-    renderGameMasterNames();
     renderTrustedNames();
     refreshRuneStatus();
     refreshAutoHealStatus();
     refreshAutoInvisibleStatus();
     refreshAutoMagicShieldStatus();
-    refreshAutoAttackStatus();
     refreshAutoEatStatus();
-    refreshCaveStatus();
     refreshEquipRingStatus();
-    refreshTalkStatus();
-    refreshVisibleCreatures();
-    refreshCavePresetControls();
-    refreshCaveClosestStatus();
-    refreshCaveTransitionStatus();
+
 
     const visibleCreaturesTimerId = window.setInterval(refreshVisibleCreatures, 1000);
     bot.addCleanup(() => {
@@ -1215,14 +1007,9 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       window.clearInterval(talkStatusTimerId);
     });
 
-    const caveStatusTimerId = window.setInterval(() => {
-      refreshCaveStatus();
-      refreshCavePresetControls();
-      refreshCaveClosestStatus();
-      refreshCaveTransitionStatus();
-    }, 1000);
+
     bot.addCleanup(() => {
-      window.clearInterval(caveStatusTimerId);
+      
     });
 
   }
