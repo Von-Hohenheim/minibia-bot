@@ -126,7 +126,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     if (!trustedNames.length) {
       const empty = document.createElement("div");
       empty.className = "mb-small-note";
-      empty.textContent = "No trusted names saved.";
+      empty.textContent = "No Hay Players Conocidos Guardados.";
       list.appendChild(empty);
       return;
     }
@@ -904,14 +904,14 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
               </label>
               <label class="mb-toggle">
                 <input type="checkbox" id="minibia-bot-panic-health" />
-                <span>Lose Health</span>
+                <span>Perdida de Vida</span>
               </label>
               <label class="mb-toggle">
                 <input type="checkbox" id="minibia-bot-panic-return" />
                 <span>Auto Return</span>
               </label>
               <div class="mb-inline">
-                <input type="text" id="minibia-bot-panic-trusted-input" placeholder="Trusted name" />
+                <input type="text" id="minibia-bot-panic-trusted-input" placeholder="Player Conocido" />
                 <button type="button" class="mb-small-button" id="minibia-bot-panic-trusted-add">Add</button>
               </div>
               <div class="mb-list" id="minibia-bot-panic-trusted-list"></div>
