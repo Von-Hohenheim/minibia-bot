@@ -7370,31 +7370,14 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     const autoHealHpHotkeyInput = panel.querySelector("#minibia-bot-auto-heal-hp-hotkey");
     const autoHealMinManaInput = panel.querySelector("#minibia-bot-auto-heal-min-mana");
     const autoHealManaHotkeyInput = panel.querySelector("#minibia-bot-auto-heal-mana-hotkey");
-    const autoAttackEnabledInput = panel.querySelector("#minibia-bot-auto-attack-enabled");
-    const autoAttackMeleeInput = panel.querySelector("#minibia-bot-auto-attack-melee");
-    const autoAttackHotkeyInput = panel.querySelector("#minibia-bot-auto-attack-hotkey");
-    const autoAttackRuneHotkeyInput = panel.querySelector("#minibia-bot-auto-attack-rune-hotkey");
-    const talkEnabledInput = panel.querySelector("#minibia-bot-talk-enabled");
-    const talkApiKeyInput = panel.querySelector("#minibia-bot-talk-api-key");
-    const talkPromptInput = panel.querySelector("#minibia-bot-talk-prompt");
-    const panicGmNameInput = panel.querySelector("#minibia-bot-panic-gm-input");
-    const panicGmAddButton = panel.querySelector("#minibia-bot-panic-gm-add");
     const panicUnknownInput = panel.querySelector("#minibia-bot-panic-unknown");
     const panicHealthInput = panel.querySelector("#minibia-bot-panic-health");
     const panicReturnInput = panel.querySelector("#minibia-bot-panic-return");
     const panicTrustedInput = panel.querySelector("#minibia-bot-panic-trusted-input");
     const panicTrustedAddButton = panel.querySelector("#minibia-bot-panic-trusted-add");
-    const xrayOverlayButton = panel.querySelector("#minibia-bot-xray-overlay-toggle");
-    const xrayFloorSelect = panel.querySelector("#minibia-bot-xray-floor-select");
     const collapseButton = panel.querySelector("#minibia-bot-collapse");
     const reloadButton = panel.querySelector("#minibia-bot-reload");
-    const caveRecordButton = panel.querySelector("#minibia-bot-cave-record");
-    const caveRemoveLastButton = panel.querySelector("#minibia-bot-cave-remove-last");
-    const caveStartButton = panel.querySelector("#minibia-bot-cave-start");
-    const caveStopButton = panel.querySelector("#minibia-bot-cave-stop");
-    const cavePresetSelect = panel.querySelector("#minibia-bot-cave-preset-select");
-    const cavePresetNewButton = panel.querySelector("#minibia-bot-cave-preset-new");
-    const cavePresetDeleteButton = panel.querySelector("#minibia-bot-cave-preset-delete");
+
 
     if (collapseButton) {
       collapseButton.addEventListener("click", () => {
@@ -7431,40 +7414,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       renderTrustedNames();
     }
 
-    function addGameMasterName() {
-      const rawName = panicGmNameInput?.value?.trim() || "";
-      if (!rawName) {
-        return;
-      }
 
-      const currentNames = bot.panic?.config?.gameMasterNames || [];
-      const exists = currentNames.some(
-        (name) => String(name).trim().toLowerCase() === rawName.toLowerCase()
-      );
-
-      if (!exists) {
-        bot.panic.updateConfig({ gameMasterNames: [...currentNames, rawName] });
-      }
-
-      if (panicGmNameInput) {
-        panicGmNameInput.value = "";
-      }
-
-      renderGameMasterNames();
-    }
-
-    if (panicGmAddButton) {
-      panicGmAddButton.addEventListener("click", addGameMasterName);
-    }
-
-    if (panicGmNameInput) {
-      panicGmNameInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          addGameMasterName();
-        }
-      });
-    }
 
     if (panicTrustedAddButton) {
       panicTrustedAddButton.addEventListener("click", addTrustedName);
@@ -7577,100 +7527,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       });
     }
 
-    if (caveRecordButton) {
-      caveRecordButton.addEventListener("click", () => {
-        bot.cave.addWaypointCurrentSpot();
-        refreshCavePresetControls();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (caveRemoveLastButton) {
-      caveRemoveLastButton.addEventListener("click", () => {
-        bot.cave.removeLastWaypoint();
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (caveStartButton) {
-      caveStartButton.addEventListener("click", () => {
-        bot.cave.start();
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (caveStopButton) {
-      caveStopButton.addEventListener("click", () => {
-        bot.cave.stop();
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (cavePresetSelect) {
-      cavePresetSelect.addEventListener("change", () => {
-        const name = cavePresetSelect.value || "";
-        const activePresetName = bot.cave?.getActivePresetName?.() || "";
-        if (!name || name === activePresetName) {
-          refreshCavePresetControls();
-          return;
-        }
-
-        const loadedPreset = bot.cave.loadPreset(name);
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (cavePresetNewButton) {
-      cavePresetNewButton.addEventListener("click", () => {
-        const name = window.prompt("Name the new cave preset:");
-        if (name == null) {
-          return;
-        }
-
-        const createdPreset = bot.cave.createPreset(name);
-        if (!createdPreset) {
-          return;
-        }
-
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
-    if (cavePresetDeleteButton) {
-      cavePresetDeleteButton.addEventListener("click", () => {
-        const name = cavePresetSelect?.value || "";
-        if (!name) {
-          return;
-        }
-
-        const deleted = bot.cave.deletePreset(name);
-        if (!deleted) {
-          return;
-        }
-
-        refreshCavePresetControls();
-        refreshCaveStatus();
-        refreshCaveClosestStatus();
-        refreshCaveTransitionStatus();
-      });
-    }
-
     if (autoHealMinHpInput) {
       autoHealMinHpInput.value = String(bot.heal?.config?.minHp ?? 0);
       autoHealMinHpInput.addEventListener("change", () => {
@@ -7731,97 +7587,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       });
     }
 
-    if (autoAttackHotkeyInput) {
-      autoAttackHotkeyInput.value = String(bot.attack?.config?.targetHotbarSlot ?? 3);
-      autoAttackHotkeyInput.addEventListener("change", () => {
-        const targetHotbarSlot = Math.min(12, Math.max(1, Number(autoAttackHotkeyInput.value) || 1));
-        autoAttackHotkeyInput.value = String(targetHotbarSlot);
-        bot.attack.updateConfig({ targetHotbarSlot });
-      });
-    }
-
-    if (autoAttackRuneHotkeyInput) {
-      autoAttackRuneHotkeyInput.value = bot.attack?.config?.runeHotbarSlot
-        ? String(bot.attack.config.runeHotbarSlot)
-        : "";
-      autoAttackRuneHotkeyInput.addEventListener("change", () => {
-        const rawValue = Number(autoAttackRuneHotkeyInput.value);
-        const runeHotbarSlot = Number.isFinite(rawValue) && rawValue >= 1 && rawValue <= 12
-          ? Math.trunc(rawValue)
-          : null;
-        autoAttackRuneHotkeyInput.value = runeHotbarSlot ? String(runeHotbarSlot) : "";
-        bot.attack.updateConfig({ runeHotbarSlot });
-      });
-    }
-
-    if (autoAttackMeleeInput) {
-      autoAttackMeleeInput.checked = bot.attack?.config?.meleeMode !== false;
-      autoAttackMeleeInput.addEventListener("change", () => {
-        bot.attack.updateConfig({ meleeMode: autoAttackMeleeInput.checked });
-      });
-    }
-
-    if (autoAttackEnabledInput) {
-      autoAttackEnabledInput.checked = !!bot.attack?.status?.().running;
-      autoAttackEnabledInput.addEventListener("change", () => {
-        const targetHotbarSlot = Math.min(
-          12,
-          Math.max(1, Number(autoAttackHotkeyInput?.value) || bot.attack.config.targetHotbarSlot || 1)
-        );
-        const runeHotbarSlot = (() => {
-          const rawValue = Number(autoAttackRuneHotkeyInput?.value);
-          if (Number.isFinite(rawValue) && rawValue >= 1 && rawValue <= 12) {
-            return Math.trunc(rawValue);
-          }
-
-          return bot.attack.config.runeHotbarSlot ?? null;
-        })();
-        const meleeMode = !!autoAttackMeleeInput?.checked;
-
-        if (autoAttackEnabledInput.checked) {
-          bot.attack.start({ targetHotbarSlot, runeHotbarSlot, meleeMode });
-        } else {
-          bot.attack.stop();
-        }
-
-        refreshAutoAttackStatus();
-      });
-    }
-
-    if (talkApiKeyInput) {
-      talkApiKeyInput.value = bot.talk?.config?.apiKey || "";
-      talkApiKeyInput.addEventListener("change", () => {
-        bot.talk.updateConfig({ apiKey: talkApiKeyInput.value.trim() });
-        refreshTalkStatus();
-      });
-    }
-
-    if (talkPromptInput) {
-      talkPromptInput.value = bot.talk?.config?.systemPrompt || "";
-      talkPromptInput.addEventListener("change", () => {
-        bot.talk.updateConfig({ systemPrompt: talkPromptInput.value.trim() });
-      });
-    }
-
-    if (talkEnabledInput) {
-      talkEnabledInput.checked = !!bot.talk?.status?.().running;
-      talkEnabledInput.addEventListener("change", () => {
-        if (talkEnabledInput.checked) {
-          bot.talk.updateConfig({
-            apiKey: talkApiKeyInput?.value?.trim() || "",
-            systemPrompt: talkPromptInput?.value?.trim() || bot.talk.config.systemPrompt || "",
-          });
-          const started = bot.talk.start();
-          if (!started) {
-            talkEnabledInput.checked = false;
-          }
-        } else {
-          bot.talk.stop();
-        }
-
-        refreshTalkStatus();
-      });
-    }
 
     if (panicUnknownInput) {
       panicUnknownInput.checked = !!bot.panic?.status?.().config?.unknownPlayerEnabled;
@@ -7847,22 +7612,6 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       });
     }
 
-    if (xrayOverlayButton) {
-      xrayOverlayButton.addEventListener("click", () => {
-        const enabled = !!bot.xray?.status?.().config?.overlayEnabled;
-        bot.xray?.setOverlayEnabled?.(!enabled);
-        refreshXrayStatus();
-      });
-    }
-
-    if (xrayFloorSelect) {
-      xrayFloorSelect.addEventListener("change", () => {
-        const rawValue = xrayFloorSelect.value;
-        bot.xray?.setSelectedFloor?.(rawValue === "all" ? null : Number(rawValue));
-        refreshXrayStatus();
-        refreshVisibleCreatures();
-      });
-    }
 
     panel.querySelector("#minibia-bot-set-home")?.addEventListener("click", () => {
       bot.pz.setHomePzCurrentSpot();
@@ -7871,39 +7620,15 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
 
     refreshHomeLabel();
     refreshPanicStatus();
-    refreshXrayStatus();
-    renderGameMasterNames();
     renderTrustedNames();
     refreshRuneStatus();
     refreshAutoHealStatus();
     refreshAutoInvisibleStatus();
     refreshAutoMagicShieldStatus();
-    refreshAutoAttackStatus();
     refreshAutoEatStatus();
-    refreshCaveStatus();
     refreshEquipRingStatus();
-    refreshTalkStatus();
-    refreshVisibleCreatures();
-    refreshCavePresetControls();
-    refreshCaveClosestStatus();
-    refreshCaveTransitionStatus();
 
-    const visibleCreaturesTimerId = window.setInterval(refreshVisibleCreatures, 1000);
-    bot.addCleanup(() => {
-      window.clearInterval(visibleCreaturesTimerId);
-    });
 
-    const talkStatusTimerId = window.setInterval(refreshTalkStatus, 1000);
-    bot.addCleanup(() => {
-      window.clearInterval(talkStatusTimerId);
-    });
-
-    const caveStatusTimerId = window.setInterval(() => {
-      refreshCaveStatus();
-      refreshCavePresetControls();
-      refreshCaveClosestStatus();
-      refreshCaveTransitionStatus();
-    }, 1000);
     bot.addCleanup(() => {
       window.clearInterval(caveStatusTimerId);
     });
@@ -7915,20 +7640,12 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     destroy,
     refreshHomeLabel,
     refreshPanicStatus,
-    refreshXrayStatus,
     refreshRuneStatus,
     refreshAutoHealStatus,
     refreshAutoInvisibleStatus,
     refreshAutoMagicShieldStatus,
-    refreshAutoAttackStatus,
     refreshAutoEatStatus,
-    refreshCaveStatus,
-    refreshCavePresetControls,
     refreshEquipRingStatus,
-    refreshTalkStatus,
-    refreshVisibleCreatures,
-    refreshCaveClosestStatus,
-    refreshCaveTransitionStatus,
     getSavedPanelPosition,
     getSavedPanelCollapsed,
     setPanelCollapsed: (collapsed) => {
@@ -7944,11 +7661,8 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     ["heal", "minibiaBot.heal.config"],
     ["invisible", "minibiaBot.invisible.config"],
     ["magicShield", "minibiaBot.magicShield.config"],
-    ["attack", "minibiaBot.attack.config"],
-    ["cave", "minibiaBot.cave.config"],
     ["equipRing", "minibiaBot.equipRing.config"],
     ["eat", "minibiaBot.eat.config"],
-    ["talk", "minibiaBot.talk.config"],
   ];
 
   function getPersistedEnabledSnapshot(bot) {
@@ -7997,17 +7711,13 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
     const bot = currentBundle.createBot();
 
     currentBundle.installPzModule(bot);
-    currentBundle.installXrayModule(bot);
     currentBundle.installPanicModule(bot);
     currentBundle.installRuneModule(bot);
     currentBundle.installHealModule(bot);
     currentBundle.installAutoInvisibleModule(bot);
     currentBundle.installAutoMagicShieldModule(bot);
-    currentBundle.installAutoAttackModule(bot);
-    currentBundle.installCaveModule(bot);
     currentBundle.installEquipRingModule(bot);
     currentBundle.installAutoEatModule(bot);
-    currentBundle.installTalkModule(bot);
     currentBundle.installPanel(bot);
 
     bot.ui.inject();
@@ -8020,17 +7730,13 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
       pz: {
         home: bot.pz.getHomePz(),
       },
-      xray: bot.xray.status(),
       panic: bot.panic.status(),
       rune: bot.rune.status(),
       heal: bot.heal.status(),
       invisible: bot.invisible.status(),
       magicShield: bot.magicShield.status(),
-      attack: bot.attack.status(),
-      cave: bot.cave.status(),
       equipRing: bot.equipRing.status(),
       eat: bot.eat.status(),
-      talk: bot.talk.status(),
     });
 
     window.minibiaBot = bot;
