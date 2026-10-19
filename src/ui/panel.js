@@ -900,7 +900,7 @@ window.__minibiaBotBundle.installPanel = function installPanel(bot) {
               <button type="button" id="minibia-bot-set-home">Set Home</button>
               <label class="mb-toggle">
                 <input type="checkbox" id="minibia-bot-panic-unknown" />
-                <span>Unknown Player</span>
+                <span>Player Desconocido</span>
               </label>
               <label class="mb-toggle">
                 <input type="checkbox" id="minibia-bot-panic-health" />
