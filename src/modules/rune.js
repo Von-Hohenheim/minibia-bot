@@ -8,6 +8,67 @@ window.__minibiaBotBundle.installRuneModule = function installRuneModule(bot) {
     lastRuneAt: 0,
   };
   let resumeListenersAttached = false;
+  
+  
+  // ===== ALERTA ANTI-BOT RUNE =====
+  let lastAntiBotAlertAt = 0;
+  const antiBotAlertCooldownMs = 3000;
+
+  function playAntiBotAlert() {
+    const now = Date.now();
+
+    // Evitar que el sonido se repita continuamente
+    if (now - lastAntiBotAlertAt < antiBotAlertCooldownMs) return;
+    lastAntiBotAlertAt = now;
+
+    try {
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
+
+      if (!AudioContextClass) {
+        bot.log("AudioContext no está disponible");
+        return;
+      }
+
+      const audio = new AudioContextClass();
+
+      audio.resume().then(() => {
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = 1000;
+        gain.gain.value = 0.3;
+
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+
+        oscillator.start();
+        oscillator.stop(audio.currentTime + 0.5);
+
+        oscillator.onended = () => audio.close();
+      }).catch((error) => {
+        bot.log("No se pudo reproducir la alerta", error?.message || error);
+        audio.close();
+      });
+    } catch (error) {
+      bot.log("Error en alerta Anti-Bot Rune", error?.message || error);
+    }
+  }
+
+  function checkAntiBotMessage(message) {
+    if (typeof message !== "string") return false;
+
+    if (message.toLowerCase().includes("anti-bot rune")) {
+      bot.log("¡Mensaje Anti-Bot Rune detectado!");
+      playAntiBotAlert();
+      return true;
+    }
+
+    return false;
+  }
+
+  // ===== FIN ALERTA ANTI-BOT RUNE =====
 
   const config = Object.assign(
     {
