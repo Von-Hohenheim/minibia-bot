@@ -294,6 +294,7 @@ window.__minibiaBotBundle.installRuneModule = function installRuneModule(bot) {
     getGateStatus,
     canMakeRune,
     tryMakeRune,
+	checkAntiBotMessage, // NUEVO
     config,
     updateConfig,
   };
