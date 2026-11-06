@@ -1,7 +1,7 @@
-window.__minibiaBotBundle = window.__minibiaBotBundle || {};
+window.__minibiaCopilotBundle = window.__minibiaCopilotBundle || {};
 
-window.__minibiaBotBundle.installAutoInvisibleModule = function installAutoInvisibleModule(bot) {
-  const configStorageKey = "minibiaBot.invisible.config";
+window.__minibiaCopilotBundle.installAutoInvisibleModule = function installAutoInvisibleModule(bot) {
+  const configStorageKey = "minibiaCopilot.invisible.config";
   const INVISIBLE_CONDITION_ID = 4;
   const state = {
     running: false,
@@ -12,14 +12,14 @@ window.__minibiaBotBundle.installAutoInvisibleModule = function installAutoInvis
 
   const config = Object.assign(
     {
-      tickMs: 500,
+      tickMs: 250,
       spellWords: "utana vid",
-      recastCooldownMs: 2000,
+      recastCooldownMs: 1000,
       enabled: false,
     },
     bot.storage.get(configStorageKey, {})
   );
-  config.tickMs = 500;
+  config.tickMs = 250;
 
   function persistConfig() {
     bot.storage.set(configStorageKey, { ...config });
@@ -30,7 +30,7 @@ window.__minibiaBotBundle.installAutoInvisibleModule = function installAutoInvis
   }
 
   function isInvisibleActive() {
-    const player = window.gameClient?.player;
+    const player = window.__minibiaGameClient?.player;
     const conditions = player?.conditions;
     const invisibleConditionId = getInvisibleConditionId();
 
@@ -139,7 +139,7 @@ window.__minibiaBotBundle.installAutoInvisibleModule = function installAutoInvis
 
   function start(overrides = {}) {
     Object.assign(config, overrides, { enabled: true });
-    config.tickMs = 500;
+    config.tickMs = 250;
     persistConfig();
 
     if (state.running) {
@@ -193,7 +193,7 @@ window.__minibiaBotBundle.installAutoInvisibleModule = function installAutoInvis
     }
 
     Object.assign(config, nextConfig);
-    config.tickMs = 500;
+    config.tickMs = 250;
     persistConfig();
     bot.log("auto invisible config updated", { ...config });
     return { ...config };

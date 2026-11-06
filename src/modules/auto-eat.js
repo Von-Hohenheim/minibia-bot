@@ -1,7 +1,7 @@
-window.__minibiaBotBundle = window.__minibiaBotBundle || {};
+window.__minibiaCopilotBundle = window.__minibiaCopilotBundle || {};
 
-window.__minibiaBotBundle.installAutoEatModule = function installAutoEatModule(bot) {
-  const configStorageKey = "minibiaBot.eat.config";
+window.__minibiaCopilotBundle.installAutoEatModule = function installAutoEatModule(bot) {
+  const configStorageKey = "minibiaCopilot.eat.config";
   const state = {
     running: false,
     timerId: null,
@@ -54,7 +54,7 @@ window.__minibiaBotBundle.installAutoEatModule = function installAutoEatModule(b
   }
 
   function isSated() {
-    const player = window.gameClient?.player;
+    const player = window.__minibiaGameClient?.player;
     const conditions = player?.conditions;
 
     if (conditions?.has && conditions.SATED != null) {

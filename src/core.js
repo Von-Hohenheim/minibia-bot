@@ -1,9 +1,25 @@
-window.__minibiaBotBundle = window.__minibiaBotBundle || {};
+﻿window.__minibiaCopilotBundle = window.__minibiaCopilotBundle || {};
 
-window.__minibiaBotBundle.createBot = function createBot() {
+function getMinibiaGameClient() {
+  try {
+    return Function(
+      "return typeof vfdOywKJESRq !== 'undefined' ? vfdOywKJESRq : null"
+    )();
+  } catch (error) {
+    console.error("[Minibia] Error recuperando GameClient:", error);
+    return null;
+  }
+}
+
+Object.defineProperty(window, "__minibiaGameClient", {
+  configurable: true,
+  get: getMinibiaGameClient
+});
+
+window.__minibiaCopilotBundle.createBot = function createBot() {
   const cleanups = [];
   const defaultAlarmAudioSrc = "https://upload.wikimedia.org/wikipedia/commons/transcoded/3/3f/ACA_Allertor_125_video.ogv/ACA_Allertor_125_video.ogv.480p.vp9.webm";
-  const alarmAudioSrcStorageKey = "minibiaBot.audio.alarmSrc";
+  const alarmAudioSrcStorageKey = "minibiaCopilot.audio.alarmSrc";
   const recentSentChats = [];
   const reconnectButtonSelectors = [
     "button",
@@ -31,7 +47,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
       try {
         fn();
       } catch (error) {
-        console.error("[minibia-bot] cleanup failed", error);
+        console.error("[minibia-copilot] cleanup failed", error);
       }
     }
   }
@@ -60,7 +76,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
       alarmAudio.removeAttribute("src");
       alarmAudio.load();
     } catch (error) {
-      console.error("[minibia-bot] audio cleanup failed", error);
+      console.error("[minibia-copilot] audio cleanup failed", error);
     }
 
     alarmAudio = null;
@@ -222,7 +238,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
 
     reconnectElement.click();
     lastReconnectClickAt = now;
-    console.log("[minibia-bot] clicked reconnect");
+    console.log("[minibia-copilot] clicked reconnect");
     return true;
   }
 
@@ -235,7 +251,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
       try {
         tryClickReconnect();
       } catch (error) {
-        console.error("[minibia-bot] reconnect watcher failed", error);
+        console.error("[minibia-copilot] reconnect watcher failed", error);
       }
     };
 
@@ -265,8 +281,125 @@ window.__minibiaBotBundle.createBot = function createBot() {
 
   startReconnectWatcher();
 
+  const cancelMessageListeners = new Set();
+  let cancelMessageHookInstalled = false;
+  let cancelMessageInstallRetryId = null;
+  let patchedNotificationProto = null;
+  let originalNotificationCancel = null;
+  let patchedInterfaceProto = null;
+  let originalInterfaceCancel = null;
+
+  function fireCancelMessage(text) {
+    const value = typeof text === "string" ? text : String(text ?? "");
+    cancelMessageListeners.forEach((cb) => {
+      try { cb(value); } catch (error) {
+        console.error("[minibia-copilot] cancel-message listener failed", error);
+      }
+    });
+  }
+
+  function tryInstallCancelMessageHook() {
+    if (cancelMessageHookInstalled) return true;
+
+    // Prefer the prototype patch because the server packet handler calls
+    // NotificationManager.setCancelMessage directly, bypassing Interface.
+    let notificationProto = null;
+    try {
+      if (typeof NotificationManager !== "undefined" && NotificationManager?.prototype?.setCancelMessage) {
+        notificationProto = NotificationManager.prototype;
+      }
+    } catch (error) {}
+    if (!notificationProto) {
+      const live = window.__minibiaGameClient?.interface?.notificationManager;
+      if (live) notificationProto = Object.getPrototypeOf(live);
+    }
+
+    let interfaceProto = null;
+    try {
+      if (typeof Interface !== "undefined" && Interface?.prototype?.setCancelMessage) {
+        interfaceProto = Interface.prototype;
+      }
+    } catch (error) {}
+    if (!interfaceProto) {
+      const live = window.__minibiaGameClient?.interface;
+      if (live) interfaceProto = Object.getPrototypeOf(live);
+    }
+
+    if (notificationProto?.setCancelMessage) {
+      originalNotificationCancel = notificationProto.setCancelMessage;
+      patchedNotificationProto = notificationProto;
+      notificationProto.setCancelMessage = function patchedNotificationCancel(message) {
+        fireCancelMessage(message);
+        return originalNotificationCancel.apply(this, arguments);
+      };
+    }
+
+    if (interfaceProto?.setCancelMessage) {
+      originalInterfaceCancel = interfaceProto.setCancelMessage;
+      patchedInterfaceProto = interfaceProto;
+      interfaceProto.setCancelMessage = function patchedInterfaceCancel(message) {
+        // Fire here too in case the NotificationManager prototype wasn't
+        // available; downstream call will hit our notification patch
+        // and de-dup is fine because listeners just react/throttle.
+        if (!patchedNotificationProto) fireCancelMessage(message);
+        return originalInterfaceCancel.apply(this, arguments);
+      };
+    }
+
+    if (patchedNotificationProto || patchedInterfaceProto) {
+      cancelMessageHookInstalled = true;
+      console.log("[minibia-copilot] cancel-message hook installed", {
+        notificationProto: !!patchedNotificationProto,
+        interfaceProto: !!patchedInterfaceProto,
+      });
+      return true;
+    }
+    return false;
+  }
+
+  function installCancelMessageHook() {
+    if (tryInstallCancelMessageHook()) return;
+    if (cancelMessageInstallRetryId != null) return;
+    cancelMessageInstallRetryId = window.setInterval(() => {
+      if (tryInstallCancelMessageHook()) {
+        window.clearInterval(cancelMessageInstallRetryId);
+        cancelMessageInstallRetryId = null;
+      }
+    }, 1000);
+  }
+
+  function uninstallCancelMessageHook() {
+    if (cancelMessageInstallRetryId != null) {
+      window.clearInterval(cancelMessageInstallRetryId);
+      cancelMessageInstallRetryId = null;
+    }
+    if (patchedNotificationProto && originalNotificationCancel) {
+      if (patchedNotificationProto.setCancelMessage !== originalNotificationCancel) {
+        patchedNotificationProto.setCancelMessage = originalNotificationCancel;
+      }
+    }
+    if (patchedInterfaceProto && originalInterfaceCancel) {
+      if (patchedInterfaceProto.setCancelMessage !== originalInterfaceCancel) {
+        patchedInterfaceProto.setCancelMessage = originalInterfaceCancel;
+      }
+    }
+    cancelMessageHookInstalled = false;
+    patchedNotificationProto = null;
+    originalNotificationCancel = null;
+    patchedInterfaceProto = null;
+    originalInterfaceCancel = null;
+  }
+
+  addCleanup(uninstallCancelMessageHook);
+
   return {
     version: "0.3.0",
+    onCancelMessage(callback) {
+      if (typeof callback !== "function") return () => {};
+      cancelMessageListeners.add(callback);
+      installCancelMessageHook();
+      return () => cancelMessageListeners.delete(callback);
+    },
     addCleanup,
     destroy() {
       if (this.panic?.stop) {
@@ -297,6 +430,14 @@ window.__minibiaBotBundle.createBot = function createBot() {
         this.equipRing.stop({ persistEnabled: false });
       }
 
+      if (this.equipAmulet?.stop) {
+        this.equipAmulet.stop({ persistEnabled: false });
+      }
+
+      if (this.lootbag?.stop) {
+        this.lootbag.stop({ persistEnabled: false });
+      }
+
       if (this.eat?.stop) {
         this.eat.stop({ persistEnabled: false });
       }
@@ -314,7 +455,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
       runCleanups();
     },
     log(...args) {
-      console.log("[minibia-bot]", ...args);
+      console.log("[minibia-copilot]", ...args);
     },
     storage: {
       get(key, fallback = null) {
@@ -334,17 +475,17 @@ window.__minibiaBotBundle.createBot = function createBot() {
       },
     },
     getPlayerPosition() {
-      return window.gameClient?.player?.getPosition?.() || null;
+      return window.__minibiaGameClient?.player?.getPosition?.() || null;
     },
     getPlayerState() {
-      return window.gameClient?.player?.state || null;
+      return window.__minibiaGameClient?.player?.state || null;
     },
     getPlayerName() {
       return (
         String(
           this.getPlayerState()?.name ||
-          window.gameClient?.player?.name ||
-          window.gameClient?.player?.state?.name ||
+          window.__minibiaGameClient?.player?.name ||
+          window.__minibiaGameClient?.player?.state?.name ||
           ""
         ).trim() || null
       );
@@ -370,7 +511,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
       };
     },
     sendChat(text) {
-      const channelManager = window.gameClient?.interface?.channelManager;
+      const channelManager = window.__minibiaGameClient?.interface?.channelManager;
       if (!channelManager || !text) {
         return false;
       }
@@ -387,7 +528,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
       return tryClickReconnect();
     },
     clickHotbar(index) {
-      const button = window.gameClient?.interface?.hotbarManager?.slots?.[index]?.canvas?.canvas;
+      const button = window.__minibiaGameClient?.interface?.hotbarManager?.slots?.[index]?.canvas?.canvas;
       if (!button) {
         return false;
       }
@@ -438,7 +579,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
 
         return true;
       } catch (error) {
-        console.error("[minibia-bot] audio unlock failed", error);
+        console.error("[minibia-copilot] audio unlock failed", error);
         return false;
       }
     },
@@ -462,7 +603,7 @@ window.__minibiaBotBundle.createBot = function createBot() {
 
         return true;
       } catch (error) {
-        console.error("[minibia-bot] alarm failed", error);
+        console.error("[minibia-copilot] alarm failed", error);
         return false;
       }
     },

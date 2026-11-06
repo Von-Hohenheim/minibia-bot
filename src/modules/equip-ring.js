@@ -1,7 +1,7 @@
-window.__minibiaBotBundle = window.__minibiaBotBundle || {};
+window.__minibiaCopilotBundle = window.__minibiaCopilotBundle || {};
 
-window.__minibiaBotBundle.installEquipRingModule = function installEquipRingModule(bot) {
-  const configStorageKey = "minibiaBot.equipRing.config";
+window.__minibiaCopilotBundle.installEquipRingModule = function installEquipRingModule(bot) {
+  const configStorageKey = "minibiaCopilot.equipRing.config";
   const RING_SLOT = 8;
   const state = {
     running: false,
@@ -12,32 +12,46 @@ window.__minibiaBotBundle.installEquipRingModule = function installEquipRingModu
 
   const config = Object.assign(
     {
-      tickMs: 1000,
-      equipCooldownMs: 1500,
+      tickMs: 500,
+      equipCooldownMs: 600,
       enabled: false,
+      ringName: "",
+      autoSwap: false,
     },
     bot.storage.get(configStorageKey, {})
   );
-  config.tickMs = 1000;
+  config.tickMs = 500;
+
+  function normalizeRingName(value) {
+    return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  }
+
+  function matchesDesiredRing(item) {
+    const desired = normalizeRingName(config.ringName);
+    if (!desired) return true;
+    const itemName = normalizeRingName(getItemName(item));
+    if (!itemName) return false;
+    return itemName === desired || itemName.startsWith(desired + " ") || itemName.startsWith(desired + "(");
+  }
 
   function persistConfig() {
     bot.storage.set(configStorageKey, { ...config });
   }
 
   function getEquipment() {
-    return window.gameClient?.player?.equipment || null;
+    return window.__minibiaGameClient?.player?.equipment || null;
   }
 
   function getOpenContainers() {
-    return Array.from(window.gameClient?.player?.__openedContainers || []);
+    return Array.from(window.__minibiaGameClient?.player?.__openedContainers || []);
   }
 
   function getItemDefinition(item) {
     if (!item) return null;
 
     return (
-      window.gameClient?.itemDefinitionsBySid?.[item.sid] ||
-      window.gameClient?.itemDefinitions?.[item.id] ||
+      window.__minibiaGameClient?.itemDefinitionsBySid?.[item.sid] ||
+      window.__minibiaGameClient?.itemDefinitions?.[item.id] ||
       null
     );
   }
@@ -88,6 +102,9 @@ window.__minibiaBotBundle.installEquipRingModule = function installEquipRingModu
       if (!isRingItem(item)) {
         return;
       }
+      if (!matchesDesiredRing(item)) {
+        return;
+      }
 
       const count = (typeof item.getCount === "function" ? item.getCount() : item.count) || 1;
       if (count > bestCount) {
@@ -110,19 +127,42 @@ window.__minibiaBotBundle.installEquipRingModule = function installEquipRingModu
     return best;
   }
 
+  function findEmptyContainerSlot() {
+    for (const container of getOpenContainers()) {
+      const slots = container?.slots || [];
+      for (let slotIndex = 0; slotIndex < slots.length; slotIndex += 1) {
+        const item = container.getSlotItem?.(slotIndex);
+        if (!item) {
+          return { container, slotIndex };
+        }
+      }
+    }
+    return null;
+  }
+
   function getGateStatus(now = Date.now()) {
     const equipment = getEquipment();
+    const equippedRing = getEquippedRing();
     const source = findBestRingSource();
     const cooldownRemainingMs = Math.max(0, config.equipCooldownMs - (now - state.lastEquipAt));
+    const wrongRingEquipped = !!equippedRing && !matchesDesiredRing(equippedRing);
+    const emptyBackpackSlot = wrongRingEquipped && config.autoSwap ? findEmptyContainerSlot() : null;
+    const canSwap = wrongRingEquipped && config.autoSwap && !!emptyBackpackSlot;
 
     return {
       hasEquipment: !!equipment,
-      hasRingEquipped: hasEquippedRing(),
+      hasRingEquipped: !!equippedRing,
+      wrongRingEquipped,
       hasRingAvailable: !!source,
       cooldownReady: cooldownRemainingMs === 0,
       cooldownRemainingMs,
       source,
-      canEquip: !!equipment && !hasEquippedRing() && !!source && cooldownRemainingMs === 0,
+      canEquip:
+        !!equipment &&
+        !!source &&
+        cooldownRemainingMs === 0 &&
+        (!equippedRing || canSwap),
+      canSwap,
     };
   }
 
@@ -131,27 +171,48 @@ window.__minibiaBotBundle.installEquipRingModule = function installEquipRingModu
   }
 
   function tryEquipRing(now = Date.now()) {
-    if (!config.enabled || !canEquipRing(now)) {
-      return false;
-    }
+    if (!config.enabled) return false;
+    const cooldownRemainingMs = Math.max(0, config.equipCooldownMs - (now - state.lastEquipAt));
+    if (cooldownRemainingMs > 0) return false;
 
     const equipment = getEquipment();
-    const source = findBestRingSource();
-    if (!equipment || !source) {
-      return false;
+    if (!equipment) return false;
+
+    const equippedRing = getEquippedRing();
+
+    if (equippedRing) {
+      if (matchesDesiredRing(equippedRing)) return false;
+      if (!config.autoSwap) return false;
+
+      const emptyBackpackSlot = findEmptyContainerSlot();
+      if (!emptyBackpackSlot) {
+        bot.log("equip ring: cannot swap, no empty backpack slot");
+        return false;
+      }
+
+      const ringCount = (typeof equippedRing.getCount === "function" ? equippedRing.getCount() : equippedRing.count) || 1;
+      window.__minibiaGameClient.send(new ItemMovePacket(
+        { which: equipment, index: RING_SLOT },
+        { which: emptyBackpackSlot.container, index: emptyBackpackSlot.slotIndex },
+        ringCount
+      ));
+      state.lastEquipAt = now;
+      bot.log("equip ring: unequipped wrong ring", {
+        name: getItemName(equippedRing),
+        toContainerId: emptyBackpackSlot.container?.__containerId ?? null,
+        toSlot: emptyBackpackSlot.slotIndex,
+      });
+      return true;
     }
 
-    const from = {
-      which: source.container,
-      index: source.slotIndex,
-    };
-    const to = {
-      which: equipment,
-      index: RING_SLOT,
-    };
-    const count = source.count || 1;
+    const source = findBestRingSource();
+    if (!source) return false;
 
-    window.gameClient.send(new ItemMovePacket(from, to, count));
+    window.__minibiaGameClient.send(new ItemMovePacket(
+      { which: source.container, index: source.slotIndex },
+      { which: equipment, index: RING_SLOT },
+      source.count || 1
+    ));
     state.lastEquipAt = now;
     bot.log("equipped ring", {
       name: source.name,
@@ -224,7 +285,7 @@ window.__minibiaBotBundle.installEquipRingModule = function installEquipRingModu
 
   function start(overrides = {}) {
     Object.assign(config, overrides, { enabled: true });
-    config.tickMs = 1000;
+    config.tickMs = 500;
     persistConfig();
 
     if (state.running) {
@@ -269,8 +330,11 @@ window.__minibiaBotBundle.installEquipRingModule = function installEquipRingModu
   }
 
   function updateConfig(nextConfig = {}) {
+    if (Object.prototype.hasOwnProperty.call(nextConfig, "ringName")) {
+      nextConfig.ringName = String(nextConfig.ringName || "").trim();
+    }
     Object.assign(config, nextConfig);
-    config.tickMs = 1000;
+    config.tickMs = 500;
     persistConfig();
     bot.log("equip ring config updated", { ...config });
     return { ...config };

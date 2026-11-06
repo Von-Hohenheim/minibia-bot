@@ -1,7 +1,7 @@
-window.__minibiaBotBundle = window.__minibiaBotBundle || {};
+window.__minibiaCopilotBundle = window.__minibiaCopilotBundle || {};
 
-window.__minibiaBotBundle.installAutoMagicShieldModule = function installAutoMagicShieldModule(bot) {
-  const configStorageKey = "minibiaBot.magicShield.config";
+window.__minibiaCopilotBundle.installAutoMagicShieldModule = function installAutoMagicShieldModule(bot) {
+  const configStorageKey = "minibiaCopilot.magicShield.config";
   const MAGIC_SHIELD_FALLBACK_DURATION_MS = 180000;
   const state = {
     running: false,
@@ -13,14 +13,14 @@ window.__minibiaBotBundle.installAutoMagicShieldModule = function installAutoMag
 
   const config = Object.assign(
     {
-      tickMs: 500,
+      tickMs: 250,
       spellWords: "utamo vita",
-      recastCooldownMs: 2000,
+      recastCooldownMs: 1000,
       enabled: false,
     },
     bot.storage.get(configStorageKey, {})
   );
-  config.tickMs = 500;
+  config.tickMs = 250;
 
   function persistConfig() {
     bot.storage.set(configStorageKey, { ...config });
@@ -28,7 +28,7 @@ window.__minibiaBotBundle.installAutoMagicShieldModule = function installAutoMag
 
   function getMagicShieldConditionId() {
     const conditionManagerPrototype = window.ConditionManager?.prototype;
-    const playerConditions = window.gameClient?.player?.conditions;
+    const playerConditions = window.__minibiaGameClient?.player?.conditions;
     const candidateKeys = [
       "MAGIC_SHIELD",
       "MANA_SHIELD",
@@ -48,7 +48,7 @@ window.__minibiaBotBundle.installAutoMagicShieldModule = function installAutoMag
   }
 
   function isMagicShieldActive(now = Date.now()) {
-    const player = window.gameClient?.player;
+    const player = window.__minibiaGameClient?.player;
     const conditions = player?.conditions;
     const magicShieldConditionId = getMagicShieldConditionId();
 
@@ -160,7 +160,7 @@ window.__minibiaBotBundle.installAutoMagicShieldModule = function installAutoMag
 
   function start(overrides = {}) {
     Object.assign(config, overrides, { enabled: true });
-    config.tickMs = 500;
+    config.tickMs = 250;
     persistConfig();
 
     if (state.running) {
@@ -215,7 +215,7 @@ window.__minibiaBotBundle.installAutoMagicShieldModule = function installAutoMag
     }
 
     Object.assign(config, nextConfig);
-    config.tickMs = 500;
+    config.tickMs = 250;
     persistConfig();
     bot.log("auto magic shield config updated", { ...config });
     return { ...config };

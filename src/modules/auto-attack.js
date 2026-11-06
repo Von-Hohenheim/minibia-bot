@@ -1,0 +1,905 @@
+window.__minibiaCopilotBundle = window.__minibiaCopilotBundle || {};
+
+window.__minibiaCopilotBundle.installAutoAttackModule = function installAutoAttackModule(bot) {
+  const configStorageKey = "minibiaCopilot.attack.config";
+  const state = {
+    running: false,
+    timerId: null,
+    lastTargetHotkeyAt: 0,
+    lastRuneHotkeyAt: 0,
+    engagedTargetId: null,
+    combatStartedAt: 0,
+    lastChaseAt: 0,
+    lastChaseDestinationKey: null,
+    lastFollowTargetId: null,
+    lastFollowDistance: Number.POSITIVE_INFINITY,
+    lastFollowProgressAt: 0,
+    lastFollowStallAt: 0,
+    skippedTargetIds: new Map(),
+  };
+
+  const storedConfig = bot.storage.get(configStorageKey, {}) || {};
+  const config = Object.assign(
+    {
+      tickMs: 500,
+      targetHotbarSlot: 3,
+      runeHotbarSlot: null,
+      targetCooldownMs: 1200,
+      runeCooldownMs: 1200,
+      maxTargetDistance: 5,
+      meleeMode: true,
+      enabled: false,
+    },
+    storedConfig
+  );
+  if (config.targetHotbarSlot == null && storedConfig.hotbarSlot != null) {
+    config.targetHotbarSlot = storedConfig.hotbarSlot;
+  }
+
+  function persistConfig() {
+    bot.storage.set(configStorageKey, { ...config });
+  }
+
+  function normalizeHotbarSlot(slot) {
+    const value = Number(slot);
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+
+    const normalized = Math.trunc(value);
+    if (normalized < 1 || normalized > 12) {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  function getNearbyMonsters() {
+    return bot.xray?.getVisibleMonsters?.({ sameFloorOnly: true }) || [];
+  }
+
+  function normalizePosition(value) {
+    if (!value) {
+      return null;
+    }
+
+    const x = Number(value.x);
+    const y = Number(value.y);
+    const z = Number(value.z);
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+      return null;
+    }
+
+    return {
+      x: Math.trunc(x),
+      y: Math.trunc(y),
+      z: Math.trunc(z),
+    };
+  }
+
+  function getPositionKey(position) {
+    return position ? `${position.x},${position.y},${position.z}` : null;
+  }
+
+  function isAdjacentTile(from, to) {
+    if (!from || !to || Number(from.z) !== Number(to.z)) {
+      return false;
+    }
+
+    const dx = Math.abs(Number(from.x) - Number(to.x));
+    const dy = Math.abs(Number(from.y) - Number(to.y));
+    return (dx !== 0 || dy !== 0) && dx <= 1 && dy <= 1;
+  }
+
+  function getTileDistance(from, to) {
+    if (!from || !to || Number(from.z) !== Number(to.z)) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    return Math.max(
+      Math.abs(Number(from.x) - Number(to.x)),
+      Math.abs(Number(from.y) - Number(to.y))
+    );
+  }
+
+  function isSameCreature(left, right) {
+    if (!left || !right) {
+      return false;
+    }
+
+    return left === right || left.id === right.id;
+  }
+
+  function findNearbyMonster(creature) {
+    if (!creature) {
+      return null;
+    }
+
+    const nearbyMonsters = getNearbyMonsters();
+    return nearbyMonsters.find((monster) => isSameCreature(monster, creature)) || null;
+  }
+
+  function findNearbyMonsterById(id) {
+    if (id == null) {
+      return null;
+    }
+
+    return getNearbyMonsters().find((monster) => monster?.id === id) || null;
+  }
+
+  function getCurrentTarget() {
+    return window.__minibiaGameClient?.player?.__target || null;
+  }
+
+  function getCurrentFollowTarget() {
+    return window.__minibiaGameClient?.player?.__followTarget || null;
+  }
+
+
+function getTargetPacketConstructor() {
+  try {
+    return Function(
+      "return typeof xybvUWFSP !== 'undefined' ? xybvUWFSP : null"
+    )();
+  } catch {
+    return null;
+  }
+}
+
+function getFollowPacketConstructor() {
+  try {
+    return Function(
+      "return typeof qEOhSUmoEi !== 'undefined' ? qEOhSUmoEi : null"
+    )();
+  } catch {
+    return null;
+  }
+}
+
+
+  function pruneSkippedTargets(now = Date.now()) {
+    for (const [id, expiresAt] of state.skippedTargetIds.entries()) {
+      if (expiresAt <= now) {
+        state.skippedTargetIds.delete(id);
+      }
+    }
+  }
+
+  function resetFollowProgress() {
+    state.lastFollowTargetId = null;
+    state.lastFollowDistance = Number.POSITIVE_INFINITY;
+    state.lastFollowProgressAt = 0;
+    state.lastFollowStallAt = 0;
+  }
+
+  function clearEngagedTarget() {
+    state.engagedTargetId = null;
+    state.combatStartedAt = 0;
+    state.lastChaseDestinationKey = null;
+    resetFollowProgress();
+  }
+
+
+
+function clearCurrentFollowTarget() {
+  const client = window.__minibiaGameClient;
+  const player = client?.player;
+  const FollowPacket = getFollowPacketConstructor();
+
+  if (!player || typeof client.send !== "function" || !FollowPacket) {
+    return false;
+  }
+
+  if (!getCurrentFollowTarget()) {
+    return false;
+  }
+
+  player.setFollowTarget(null);
+  client.send(new FollowPacket(0));
+
+  return true;
+}
+
+function clearCurrentTarget() {
+  const client = window.__minibiaGameClient;
+  const player = client?.player;
+  const TargetPacket = getTargetPacketConstructor();
+
+  if (!player || typeof client.send !== "function" || !TargetPacket) {
+    return false;
+  }
+
+  if (!getCurrentTarget()) {
+    return false;
+  }
+
+  player.setTarget(null);
+  client.send(new TargetPacket(0));
+
+  state.engagedTargetId = null;
+
+  return true;
+}
+
+
+
+  function markCombatActive(now = Date.now()) {
+    if (!state.combatStartedAt) {
+      state.combatStartedAt = now;
+    }
+  }
+
+  function getCombatTargetCount() {
+    return getEngagedTarget() ? 1 : 0;
+  }
+
+  function isCombatActive() {
+    if (!config.enabled || !state.running) {
+      return false;
+    }
+
+    return !!getEngagedTarget();
+  }
+
+  function syncCombatState(now = Date.now()) {
+    if (isCombatActive()) {
+      markCombatActive(now);
+      return true;
+    }
+
+    state.combatStartedAt = 0;
+    return false;
+  }
+
+  function getEngagedTarget() {
+    const currentTarget = getCurrentTarget();
+    if (currentTarget) {
+      state.engagedTargetId = currentTarget.id;
+      return currentTarget;
+    }
+
+    if (state.engagedTargetId == null) {
+      return null;
+    }
+
+    const followTarget = getCurrentFollowTarget();
+    if (followTarget && followTarget.id === state.engagedTargetId) {
+      return findNearbyMonster(followTarget) || followTarget;
+    }
+
+    const nearbyTarget = findNearbyMonsterById(state.engagedTargetId);
+    if (nearbyTarget) {
+      return nearbyTarget;
+    }
+
+    clearEngagedTarget();
+    return null;
+  }
+
+
+function setCurrentFollowTarget(target) {
+  const client = window.__minibiaGameClient;
+  const player = client?.player;
+  const FollowPacket = getFollowPacketConstructor();
+
+  if (
+    !target ||
+    !player ||
+    typeof client.send !== "function" ||
+    !FollowPacket ||
+    !Number.isInteger(Number(target.id))
+  ) {
+    return false;
+  }
+
+  if (isSameCreature(getCurrentFollowTarget(), target)) {
+    return true;
+  }
+
+  player.setFollowTarget(target);
+  client.send(new FollowPacket(Number(target.id)));
+
+  return true;
+}
+
+
+  function skipTarget(target, reason, now = Date.now(), skipMs = 4000) {
+    if (!target?.id) {
+      return false;
+    }
+
+    const until = now + Math.max(500, Number(skipMs) || 0);
+    state.skippedTargetIds.set(target.id, until);
+
+    const clearedTarget = isSameCreature(getCurrentTarget(), target) ? clearCurrentTarget() : false;
+    const clearedFollow = isSameCreature(getCurrentFollowTarget(), target) ? clearCurrentFollowTarget() : false;
+
+    if (state.engagedTargetId === target.id) {
+      clearEngagedTarget();
+    } else if (state.lastFollowTargetId === target.id) {
+      resetFollowProgress();
+    }
+
+    bot.log("skipping auto attack target", {
+      id: target.id,
+      name: target.name || "Mob",
+      reason,
+      skippedForMs: Math.max(500, Number(skipMs) || 0),
+      clearedTarget,
+      clearedFollow,
+    });
+    return true;
+  }
+
+  function isTargetSkipped(target, now = Date.now()) {
+    pruneSkippedTargets(now);
+    return !!target?.id && (state.skippedTargetIds.get(target.id) || 0) > now;
+  }
+
+  function getMonsterCandidates(now = Date.now()) {
+    pruneSkippedTargets(now);
+
+    const playerPosition = normalizePosition(bot.getPlayerPosition());
+    return getNearbyMonsters()
+      .filter((monster) => !isTargetSkipped(monster, now))
+      .sort((left, right) => {
+        const leftDistance = getTileDistance(playerPosition, normalizePosition(left?.getPosition?.() || left?.__position));
+        const rightDistance = getTileDistance(playerPosition, normalizePosition(right?.getPosition?.() || right?.__position));
+        return leftDistance - rightDistance || Number(left?.id || 0) - Number(right?.id || 0);
+      });
+  }
+
+  function shouldGiveUpTarget(target) {
+    const maxTargetDistance = Math.max(1, Number(config.maxTargetDistance) || 5);
+    const playerPosition = normalizePosition(bot.getPlayerPosition());
+    const targetPosition = normalizePosition(target?.getPosition?.() || target?.__position);
+    if (!playerPosition || !targetPosition) {
+      return false;
+    }
+
+    return getTileDistance(playerPosition, targetPosition) > maxTargetDistance;
+  }
+
+ function resetTargetIfTooFar() {
+  const currentTarget = getCurrentTarget();
+
+  if (currentTarget && shouldGiveUpTarget(currentTarget)) {
+    skipTarget(currentTarget, "target too far", Date.now(), 2500);
+
+    bot.log("gave up distant auto attack target", {
+      id: currentTarget.id,
+      name: currentTarget.name || "Mob",
+      position: normalizePosition(
+        currentTarget.getPosition?.() || currentTarget.__position
+      ),
+      maxTargetDistance: Math.max(
+        1,
+        Number(config.maxTargetDistance) || 5
+      ),
+    });
+
+    return true;
+  }
+
+  const engagedTarget = getEngagedTarget();
+
+  if (engagedTarget && shouldGiveUpTarget(engagedTarget)) {
+    skipTarget(engagedTarget, "engaged target too far", Date.now(), 2500);
+
+    bot.log("gave up distant auto attack target", {
+      id: engagedTarget.id,
+      name: engagedTarget.name || "Mob",
+      position: normalizePosition(
+        engagedTarget.getPosition?.() || engagedTarget.__position
+      ),
+      maxTargetDistance: Math.max(
+        1,
+        Number(config.maxTargetDistance) || 5
+      ),
+    });
+
+    return true;
+  }
+
+  return false;
+}
+
+function setCurrentTarget(target) {
+  const client = window.__minibiaGameClient;
+  const player = client?.player;
+  const TargetPacket = getTargetPacketConstructor();
+
+  if (
+    !target ||
+    !player ||
+    typeof client.send !== "function" ||
+    !TargetPacket ||
+    !Number.isInteger(Number(target.id))
+  ) {
+    return false;
+  }
+
+  player.setTarget(target);
+  client.send(new TargetPacket(Number(target.id)));
+
+  state.engagedTargetId = target.id;
+
+  return true;
+}
+
+  function getTileFromPosition(position) {
+    if (!position || typeof Position !== "function") {
+      return null;
+    }
+
+    return window.__minibiaGameClient?.world?.getTileFromWorldPosition?.(
+      new Position(position.x, position.y, position.z)
+    ) || null;
+  }
+
+  function findReachableAdjacentPosition(targetPosition, playerPosition) {
+    if (!targetPosition || !playerPosition) {
+      return null;
+    }
+
+    const offsets = [
+      { x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 },
+      { x: -1, y: -1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: 1, y: 1 },
+    ];
+
+    offsets.sort((a, b) => {
+      const da = Math.abs(targetPosition.x + a.x - playerPosition.x) +
+        Math.abs(targetPosition.y + a.y - playerPosition.y);
+      const db = Math.abs(targetPosition.x + b.x - playerPosition.x) +
+        Math.abs(targetPosition.y + b.y - playerPosition.y);
+      return da - db;
+    });
+
+    const pathfinder = window.__minibiaGameClient?.world?.pathfinder;
+    const startTile = getTileFromPosition(playerPosition);
+    if (!pathfinder || !startTile || typeof pathfinder.search !== "function") {
+      return null;
+    }
+
+    for (const offset of offsets) {
+      const candidatePosition = {
+        x: targetPosition.x + offset.x,
+        y: targetPosition.y + offset.y,
+        z: targetPosition.z,
+      };
+      const tile = getTileFromPosition(candidatePosition);
+      if (!tile?.isWalkable?.()) {
+        continue;
+      }
+
+      if (candidatePosition.x === playerPosition.x && candidatePosition.y === playerPosition.y) {
+        return candidatePosition;
+      }
+
+      try {
+        const path = pathfinder.search(startTile, tile);
+        if (Array.isArray(path) && path.length > 0) {
+          return candidatePosition;
+        }
+      } catch (error) {
+        bot.log("auto attack reachability check failed", {
+          ...candidatePosition,
+          error: error?.message || error,
+        });
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+
+
+function syncMeleeChase(now = Date.now()) {
+  if (!config.meleeMode) {
+    return false;
+  }
+
+  const target = getEngagedTarget();
+
+  if (!target) {
+    clearEngagedTarget();
+    return false;
+  }
+
+  const playerPosition = normalizePosition(bot.getPlayerPosition());
+  const targetPosition = normalizePosition(
+    target.getPosition?.() || target.__position
+  );
+
+  if (
+    !playerPosition ||
+    !targetPosition ||
+    playerPosition.z !== targetPosition.z
+  ) {
+    bot.log("auto attack chase target on different floor", {
+      targetId: target.id,
+      targetName: target.name || "Mob",
+      playerZ: playerPosition?.z,
+      targetZ: targetPosition?.z,
+    });
+
+    return false;
+  }
+
+  if (!findNearbyMonster(target)) {
+    bot.log("auto attack chase target no longer nearby", {
+      targetId: target.id,
+      targetName: target.name || "Mob",
+    });
+
+    clearCurrentFollowTarget();
+    clearEngagedTarget();
+    return false;
+  }
+
+  const giveUpDelayMs = Math.max(
+    5000,
+    (Number(config.tickMs) || 0) * 10
+  );
+
+  const currentDistance = getTileDistance(
+    playerPosition,
+    targetPosition
+  );
+
+  // Si el jugador ya está junto al monstruo, cancela el seguimiento.
+  if (isAdjacentTile(playerPosition, targetPosition)) {
+    state.lastChaseDestinationKey = null;
+
+    clearCurrentFollowTarget();
+    resetFollowProgress();
+
+    return false;
+  }
+
+  // Inicializar seguimiento del objetivo.
+  if (state.lastFollowTargetId !== target.id) {
+    state.lastFollowTargetId = target.id;
+    state.lastFollowDistance = currentDistance;
+    state.lastFollowProgressAt = now;
+    state.lastFollowStallAt = 0;
+  } else if (currentDistance < state.lastFollowDistance) {
+    state.lastFollowDistance = currentDistance;
+    state.lastFollowProgressAt = now;
+    state.lastFollowStallAt = 0;
+  }
+
+  const alreadyFollowing = isSameCreature(
+    getCurrentFollowTarget(),
+    target
+  );
+
+  // Utilizar el seguimiento nativo del juego.
+  const followed = setCurrentFollowTarget(target);
+
+  if (!followed) {
+    bot.log("auto attack failed to follow target", {
+      targetId: target.id,
+      targetName: target.name || "Mob",
+    });
+
+    return false;
+  }
+
+  if (!alreadyFollowing) {
+    state.lastChaseAt = now;
+
+    bot.log("following auto attack target", {
+      id: target.id,
+      name: target.name || "Mob",
+      followTargetId: target.id,
+      distance: currentDistance,
+    });
+  }
+
+  // Detectar si el personaje no consigue acercarse.
+  if (currentDistance < state.lastFollowDistance) {
+    state.lastFollowDistance = currentDistance;
+    state.lastFollowProgressAt = now;
+    state.lastFollowStallAt = 0;
+  } else {
+    if (!state.lastFollowStallAt) {
+      state.lastFollowStallAt = now;
+    } else if (now - state.lastFollowStallAt > giveUpDelayMs) {
+      return skipTarget(
+        target,
+        "follow made no progress",
+        now
+      );
+    }
+  }
+
+  return true;
+}
+
+
+
+  function canAttack(now = Date.now()) {
+    const slot = normalizeHotbarSlot(config.targetHotbarSlot);
+    if (!slot) {
+      return false;
+    }
+
+    if (now - state.lastTargetHotkeyAt < Math.max(0, Number(config.targetCooldownMs) || 0)) {
+      return false;
+    }
+
+    if (config.meleeMode) {
+      return getMonsterCandidates(now).length > 0 && !getCurrentTarget();
+    }
+
+    return getNearbyMonsters().length > 0;
+  }
+
+
+function triggerAttack(now = Date.now()) {
+  if (!canAttack(now)) {
+    return false;
+  }
+
+  const engagedTarget = getEngagedTarget();
+
+  const preferredTarget =
+    engagedTarget && !isTargetSkipped(engagedTarget, now)
+      ? engagedTarget
+      : (getMonsterCandidates(now)[0] || null);
+
+  if (preferredTarget) {
+    const selected = setCurrentTarget(preferredTarget);
+
+    if (!selected) {
+      bot.log("failed to select auto attack target", {
+        id: preferredTarget.id,
+        name: preferredTarget.name || "Mob",
+      });
+      return false;
+    }
+
+    const slot = normalizeHotbarSlot(config.targetHotbarSlot);
+
+    const clicked = slot
+      ? bot.clickHotbar(slot - 1)
+      : false;
+
+    state.lastTargetHotkeyAt = now;
+    markCombatActive(now);
+
+    bot.log("auto attack target selected", {
+      id: preferredTarget.id,
+      name: preferredTarget.name || "Mob",
+      slot,
+      clicked,
+    });
+
+    return true;
+  }
+
+  return false;
+}
+
+
+  function canUseRune(now = Date.now()) {
+    const slot = normalizeHotbarSlot(config.runeHotbarSlot);
+    if (!slot || !getCurrentTarget()) {
+      return false;
+    }
+
+    if (now - state.lastRuneHotkeyAt < Math.max(0, Number(config.runeCooldownMs) || 0)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function triggerRune(now = Date.now()) {
+    if (!canUseRune(now)) {
+      return false;
+    }
+
+    const slot = normalizeHotbarSlot(config.runeHotbarSlot);
+    const clicked = bot.clickHotbar(slot - 1);
+    if (clicked) {
+      state.lastRuneHotkeyAt = now;
+      markCombatActive(now);
+      bot.log("used auto attack rune hotkey", {
+        slot,
+        target: getCurrentTarget()?.name || "Mob",
+      });
+    }
+
+    return clicked;
+  }
+
+  function tryAttack() {
+    if (!config.enabled) {
+      return false;
+    }
+
+    const now = Date.now();
+    const playerPos = normalizePosition(bot.getPlayerPosition());
+
+    if (resetTargetIfTooFar()) {
+      bot.log("auto attack no valid targets near enough");
+      return true;
+    }
+
+    syncCombatState(now);
+
+    if (config.meleeMode) {
+      const chased = syncMeleeChase(now);
+      if (getCurrentTarget()) {
+        return false;
+      }
+
+      if (chased) {
+        return triggerAttack(now) || true;
+      }
+
+      bot.log("auto attack melee no target", { position: playerPos });
+    }
+
+    if (getCurrentTarget()) {
+      return triggerRune(now);
+    }
+
+    const nearbyCount = getNearbyMonsters().length;
+    const attacked = triggerAttack(now);
+    bot.log("auto attack trigger", {
+      attacked,
+      nearbyMonsters: nearbyCount,
+      hasCurrentTarget: !!getCurrentTarget(),
+      position: playerPos,
+    });
+    return attacked;
+  }
+
+  function scheduleNextTick() {
+    if (!state.running) return;
+
+    state.timerId = window.setTimeout(() => {
+      tick();
+    }, config.tickMs);
+  }
+
+  function tick() {
+    if (!state.running) return;
+
+    try {
+      tryAttack();
+    } catch (error) {
+      const playerPos = normalizePosition(bot.getPlayerPosition());
+      const combatStatus = bot.attack?.status?.() || {};
+      bot.log("auto attack tick failed", {
+        position: playerPos,
+        error: error?.message || error,
+        combatDurationMs: combatStatus.combatDurationMs,
+        targetCount: combatStatus.targetCount,
+        meleeMode: config.meleeMode,
+      });
+    } finally {
+      scheduleNextTick();
+    }
+  }
+
+  function start(overrides = {}) {
+    Object.assign(config, overrides, { enabled: true });
+    persistConfig();
+
+    if (state.running) {
+      bot.log("auto attack already running");
+      return false;
+    }
+
+    state.running = true;
+    bot.log("auto attack started", { ...config });
+    tick();
+    return true;
+  }
+
+  function stop(options = {}) {
+    const shouldPersistEnabled = options.persistEnabled !== false;
+    state.running = false;
+
+    if (state.timerId != null) {
+      window.clearTimeout(state.timerId);
+      state.timerId = null;
+    }
+
+    if (shouldPersistEnabled) {
+      config.enabled = false;
+      persistConfig();
+    }
+
+    clearEngagedTarget();
+    state.lastChaseAt = 0;
+    clearCurrentFollowTarget();
+    state.skippedTargetIds.clear();
+
+    bot.log("auto attack stopped");
+    return true;
+  }
+
+  function status() {
+    const combatActive = syncCombatState(Date.now());
+    return {
+      running: state.running,
+      config: { ...config },
+      lastTargetHotkeyAt: state.lastTargetHotkeyAt,
+      lastRuneHotkeyAt: state.lastRuneHotkeyAt,
+      engagedTargetId: state.engagedTargetId,
+      combatActive,
+      combatStartedAt: state.combatStartedAt || 0,
+      combatDurationMs: state.combatStartedAt ? Math.max(0, Date.now() - state.combatStartedAt) : 0,
+      targetCount: getCombatTargetCount(),
+      lastChaseAt: state.lastChaseAt,
+      currentTarget: getCurrentTarget()
+        ? {
+            id: getCurrentTarget().id,
+            name: getCurrentTarget().name,
+            type: getCurrentTarget().type,
+            position: getCurrentTarget().__position || null,
+          }
+        : null,
+      nearbyMonsters: getNearbyMonsters().map((creature) => ({
+        id: creature.id,
+        name: creature.name,
+        type: creature.type,
+        position: creature.__position || null,
+      })),
+    };
+  }
+
+  function updateConfig(nextConfig = {}) {
+    if (Object.prototype.hasOwnProperty.call(nextConfig, "targetHotbarSlot")) {
+      nextConfig.targetHotbarSlot = normalizeHotbarSlot(nextConfig.targetHotbarSlot) ?? config.targetHotbarSlot;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(nextConfig, "runeHotbarSlot")) {
+      nextConfig.runeHotbarSlot = normalizeHotbarSlot(nextConfig.runeHotbarSlot);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(nextConfig, "maxTargetDistance")) {
+      nextConfig.maxTargetDistance = Math.max(1, Math.trunc(Number(nextConfig.maxTargetDistance) || config.maxTargetDistance || 8));
+    }
+
+    Object.assign(config, nextConfig);
+    persistConfig();
+    bot.log("auto attack config updated", { ...config });
+    return { ...config };
+  }
+
+  if (config.enabled) {
+    start();
+  }
+
+  bot.addCleanup(() => {
+    stop({ persistEnabled: false });
+  });
+
+  bot.attack = {
+    start,
+    stop,
+    status,
+    updateConfig,
+    tryAttack,
+    canAttack,
+    triggerAttack,
+    canUseRune,
+    triggerRune,
+    getNearbyMonsters,
+    getCurrentTarget,
+    getCurrentFollowTarget,
+    isCombatActive,
+    syncMeleeChase,
+    normalizeHotbarSlot,
+    config,
+  };
+};
+
+ 

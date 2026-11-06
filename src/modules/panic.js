@@ -1,7 +1,7 @@
-window.__minibiaBotBundle = window.__minibiaBotBundle || {};
+window.__minibiaCopilotBundle = window.__minibiaCopilotBundle || {};
 
-window.__minibiaBotBundle.installPanicModule = function installPanicModule(bot) {
-  const configStorageKey = "minibiaBot.panic.config";
+window.__minibiaCopilotBundle.installPanicModule = function installPanicModule(bot) {
+  const configStorageKey = "minibiaCopilot.panic.config";
   const state = {
     running: false,
     timerId: null,
@@ -120,7 +120,7 @@ window.__minibiaBotBundle.installPanicModule = function installPanicModule(bot) 
   }
 
   function getRecentChannelMessages() {
-    return (window.gameClient?.interface?.channelManager?.channels || []).flatMap((channel) =>
+    return (window.__minibiaGameClient?.interface?.channelManager?.channels || []).flatMap((channel) =>
       (channel?.__contents || []).map((entry) => ({
         channelName: channel?.name || null,
         message: String(entry?.message || ""),
@@ -335,6 +335,8 @@ window.__minibiaBotBundle.installPanicModule = function installPanicModule(bot) 
     bot.ui?.refreshAutoEatStatus?.();
     bot.ui?.refreshAutoInvisibleStatus?.();
     bot.ui?.refreshAutoMagicShieldStatus?.();
+    bot.ui?.refreshAutoAttackStatus?.();
+    bot.ui?.refreshCaveStatus?.();
     bot.ui?.refreshEquipRingStatus?.();
     return true;
   }
